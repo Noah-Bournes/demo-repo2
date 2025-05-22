@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "daed76d2-1930-41d3-9292-479688e2374e\u0027)]",
+    "DisplayName":  "Cross-tenant Access Settings Organization Outbound Direct Settings Changed",
+    "Description":  "Organizations are added in the Cross-tenant Access Settings to control communication inbound or outbound for users and applications. This detection notifies when Organization Outbound Direct Settings are changed for \"Users \u0026 Groups\" and for \"Applications\".",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "//In User \u0026 Groups and in Applications, the following \"AccessType\" values in columns PremodifiedOutboundSettings and ModifiedOutboundSettings are interpreted accordingly:\n// When Access Type in premodified outbound settings value was 1 that means that the initial access was allowed. When Access Type in premodified outbound settings value was 2 that means that the initial access was blocked. \n// When Access Type in modified outbound settings value is 1 that means that now access is allowed. When Access Type in modified outbound settings value is 2 that means that now access is blocked. \nAuditLogs\n| where OperationName has \"Update a partner cross-tenant access setting\"\n| mv-apply TargetResource = TargetResources on\n  (\n      where TargetResource.type =~ \"Policy\"\n      | extend Properties = TargetResource.modifiedProperties\n  )\n| mv-apply Property = Properties on\n  (\n      where Property.displayName =~ \"b2bDirectConnectOutbound\"\n      | extend PremodifiedOutboundSettings = trim(\u0027\"\u0027,tostring(Property.oldValue)),\n               ModifiedOutboundSettings = trim(@\u0027\"\u0027,tostring(Property.newValue))\n  )\n| extend InitiatedByActionUserInformation = iff(isnotempty(InitiatedBy.user.userPrincipalName), InitiatedBy.user.userPrincipalName, InitiatedBy.app.displayName)\n| extend InitiatedByIPAdress = InitiatedBy.user.ipAddress\n| where PremodifiedOutboundSettings != ModifiedOutboundSettings\n| extend Name = tostring(split(InitiatedByActionUserInformation,\u0027@\u0027,0)[0]), UPNSuffix = tostring(split(InitiatedByActionUserInformation,\u0027@\u0027,1)[0])",
+    "QueryFrequency":  "P2D",
+    "QueryPeriod":  "P2D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "0101e08d-99cd-4a97-a9e0-27649c4369ad",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (1).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:21",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:21",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

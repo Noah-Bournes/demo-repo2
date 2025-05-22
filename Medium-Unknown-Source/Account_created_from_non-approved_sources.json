@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "fd48143d-15fe-4175-9c76-9794084b60b6\u0027)]",
+    "DisplayName":  "Account created from non-approved sources",
+    "Description":  "This query looks for account being created from a domain that is not regularly seen in a tenant.\n  Attackers may attempt to add accounts from these sources as a means of establishing persistant access to an environment.\n  Created accounts should be investigated to ensure they were legitimated created.\n  Ref: https://docs.microsoft.com/azure/active-directory/fundamentals/security-operations-user-accounts#short-lived-accounts",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "let core_domains = (SigninLogs\n  | where TimeGenerated \u003e ago(7d)\n  | where ResultType == 0\n  | extend domain = tolower(split(UserPrincipalName, \"@\")[1])\n  | summarize by tostring(domain));\n  let alternative_domains = (SigninLogs\n  | where TimeGenerated \u003e ago(7d)\n  | where isnotempty(AlternateSignInName)\n  | where ResultType == 0\n  | extend domain = tolower(split(AlternateSignInName, \"@\")[1])\n  | summarize by tostring(domain));\n  AuditLogs\n  | where TimeGenerated \u003e ago(1d)\n  | where OperationName =~ \"Add User\"\n  | extend AddingUser = tostring(parse_json(tostring(InitiatedBy.user)).userPrincipalName)\n  | extend AddingSPN = tostring(parse_json(tostring(InitiatedBy.app)).servicePrincipalName)\n  | extend AddedBy = iif(isnotempty(AddingUser), AddingUser, AddingSPN)\n  | extend UserAdded = tostring(TargetResources[0].userPrincipalName)\n  | extend Domain = tolower(split(UserAdded, \"@\")[1])\n  | where Domain !in (core_domains) and Domain !in (alternative_domains)\n  | project-away AddingUser\n  | project-reorder TimeGenerated, UserAdded, Domain, AddedBy",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P7D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "99d589fa-7337-40d7-91a0-c96d0c4fa437",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (1).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:20",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:20",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

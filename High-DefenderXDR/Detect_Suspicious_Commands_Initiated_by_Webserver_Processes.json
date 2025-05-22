@@ -1,0 +1,88 @@
+﻿{
+    "RuleId":  "e59ad0c2-7c97-4854-b010-fe768f5ee48e\u0027)]",
+    "DisplayName":  "Detect Suspicious Commands Initiated by Webserver Processes",
+    "Description":  "This query was originally published in the threat analytics report, Operation Soft Cell.\nOperation Soft Cell is a series of campaigns targeting users\u0027 call logs at telecommunications providers throughout the world. These attacks date from as early as 2012.\nOperation Soft Cell operators sometimes use legitimate web server processes to launch commands, especially for network discovery and user/owner discovery. The following query detects activity of this kind.\nReference - https://www.cybereason.com/blog/operation-soft-cell-a-worldwide-campaign-against-telecommunications-providers",
+    "Severity":  "High",
+    "Enabled":  true,
+    "Query":  "// Suspicious commands launched by web server processes\nDeviceProcessEvents \n| where (((InitiatingProcessParentFileName in(\"w3wp.exe\", \"beasvc.exe\",\n    \"httpd.exe\") or InitiatingProcessParentFileName startswith \"tomcat\")\n    or InitiatingProcessFileName in(\"w3wp.exe\", \"beasvc.exe\", \"httpd.exe\") or\n    InitiatingProcessFileName startswith \"tomcat\"))\n    and FileName in~(\u0027cmd.exe\u0027, \u0027powershell.exe\u0027)\n| where ProcessCommandLine contains \u0027%temp%\u0027\n    or ProcessCommandLine has \u0027wget\u0027\n    or ProcessCommandLine has \u0027whoami\u0027\n    or ProcessCommandLine has \u0027certutil\u0027\n    or ProcessCommandLine has \u0027systeminfo\u0027\n    or ProcessCommandLine has \u0027ping\u0027\n    or ProcessCommandLine has \u0027ipconfig\u0027\n    or ProcessCommandLine has \u0027timeout\u0027\n| summarize\n    take_any(FileName),\n    make_set(ProcessCommandLine, 100000),\n    take_any(InitiatingProcessFileName),\n    take_any(InitiatingProcessParentFileName)\n    by DeviceId, DeviceName\n| extend HostName = iff(DeviceName has \u0027.\u0027, substring(DeviceName, 0, indexof(DeviceName, \u0027.\u0027)), DeviceName)\n| extend DnsDomain = iff(DeviceName has \u0027.\u0027, substring(DeviceName, indexof(DeviceName, \u0027.\u0027) + 1), \"\")\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Execution",
+                    "DefenseEvasion",
+                    "Discovery"
+                ],
+    "Techniques":  [
+                       "T1059",
+                       "T1574",
+                       "T1087",
+                       "T1082"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "fa2f7d8a-6726-465a-aa72-6f6e3d4c99d7",
+    "TemplateVersion":  "1.0.0",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Host",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "DeviceName"
+                                                     },
+                                                     {
+                                                         "identifier":  "HostName",
+                                                         "columnName":  "HostName"
+                                                     },
+                                                     {
+                                                         "identifier":  "DnsDomain",
+                                                         "columnName":  "DnsDomain"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:22",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:22",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

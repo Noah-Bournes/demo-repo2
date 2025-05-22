@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "0996e975-e39e-4909-ba2e-535e9149891a\u0027)]",
+    "DisplayName":  "TI map URL entity to SecurityAlert data",
+    "Description":  "Identifies a match in SecurityAlert data from any URL IOC from TI",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "\nlet dt_lookBack = 1h;\nlet ioc_lookBack = 14d;\nThreatIntelligenceIndicator\n| where TimeGenerated \u003e= ago(ioc_lookBack) and ExpirationDateTime \u003e now()\n| summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by IndicatorId\n| where Active == true\n// Picking up only IOC\u0027s that contain the entities we want\n| where isnotempty(Url)\n// using innerunique to keep perf fast and result set low, we only need one match to indicate potential malicious activity that needs to be investigated\n| join kind=innerunique (\n  SecurityAlert\n  | where TimeGenerated \u003e= ago(dt_lookBack)\n  | extend MSTI = case(AlertName has \"TI map\" and VendorName == \"Microsoft\" and ProductName == \u0027Azure Sentinel\u0027, true, false)\n  | where MSTI == false\n  // Extract URL from JSON data\n  | extend Url = extract(\"(http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.\u0026+]|[!*\\\\(\\\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)\", 1,Entities)\n  // We only want alerts that actually contain URL data\n  | where isnotempty(Url)\n  // Extract hostname from JSON data for entity mapping\n  | extend Compromised_Host = tostring(parse_json(ExtendedProperties).[\"Compromised Host\"])\n  | extend Alert_TimeGenerated = TimeGenerated\n) on Url\n| where Alert_TimeGenerated \u003c ExpirationDateTime\n| summarize Alert_TimeGenerated = arg_max(Alert_TimeGenerated, *) by IndicatorId, AlertName\n| project Alert_TimeGenerated, ActivityGroupNames, IndicatorId, ThreatType, ExpirationDateTime, ConfidenceScore, AlertName, AlertSeverity, Description, Url, Compromised_Host\n| extend timestamp = Alert_TimeGenerated, HostCustomEntity = Compromised_Host, URLCustomEntity = Url\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "P14D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Impact"
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "f30a47c1-65fb-42b1-a7f4-00941c12550b",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (14).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:24",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:24",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

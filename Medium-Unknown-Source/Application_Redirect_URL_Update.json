@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "c8a24e8f-7140-497e-affc-572c93653d8e\u0027)]",
+    "DisplayName":  "Application Redirect URL Update",
+    "Description":  "Detects the redirect URL of an app being changed.\n  Applications associated with URLs not controlled by the organization can pose a security risk.\n  Ref: https://docs.microsoft.com/azure/active-directory/fundamentals/security-operations-applications#application-configuration-changes",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "AuditLogs\n  | where Category =~ \"ApplicationManagement\"\n  | where Result =~ \"success\"\n  | where OperationName =~ \u0027Update Application\u0027\n  | mv-expand TargetResources\n  | mv-expand TargetResources.modifiedProperties\n  | where TargetResources_modifiedProperties.displayName =~ \"AppAddress\"\n  | extend Key = tostring(TargetResources_modifiedProperties.displayName)\n  | extend NewValue = TargetResources_modifiedProperties.newValue\n  | extend OldValue = TargetResources_modifiedProperties.oldValue\n  | where isnotempty(Key) and isnotempty(NewValue)\n  | project-reorder Key, NewValue, OldValue\n  | extend NewUrls = extract_all(\u0027\"Address\":([^,]*)\u0027, tostring(NewValue))\n  | extend OldUrls = extract_all(\u0027\"Address\":([^,]*)\u0027, tostring(OldValue))\n  | extend AddedUrls = set_difference(NewUrls, OldUrls)\n  | where array_length(AddedUrls) \u003e 0\n  | extend UserAgent = iif(tostring(AdditionalDetails[0].key) == \"User-Agent\", tostring(AdditionalDetails[0].value), \"\")\n  | extend AddingUser = iif(isnotempty(tostring(parse_json(tostring(InitiatedBy.user)).userPrincipalName)) , tostring(parse_json(tostring(InitiatedBy.user)).userPrincipalName), \"\")\n  | extend AddingApp = iif(isnotempty(tostring(parse_json(tostring(InitiatedBy.app)).servicePrincipalName)) , tostring(parse_json(tostring(InitiatedBy.app)).servicePrincipalName), \"\")\n  | extend AddedBy = iif(isnotempty(AddingUser), AddingUser, AddingApp)\n  | project-away AddingApp, AddingUser\n  | extend AppDisplayName = tostring(TargetResources.displayName)\n  | extend ipAddress = tostring(parse_json(tostring(InitiatedBy.user)).ipAddress)\n  | project-reorder TimeGenerated, AppDisplayName, AddedUrls, AddedBy, UserAgent, ipAddress",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P1D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "a1080fc1-13d1-479b-8340-255f0290d96c",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (1).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:20",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:20",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

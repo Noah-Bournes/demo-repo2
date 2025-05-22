@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "8c6ddcc9-98da-4c87-9941-68d1c97cf28d\u0027)]",
+    "DisplayName":  "(Preview) TI map IP entity to DNS Events (ASIM DNS schema)",
+    "Description":  "This rule identifies DNS requests for which response IP address is a known IoC. \u003cbr\u003e\u003cbr\u003e\nThis analytic rule uses [ASIM](https://aka.ms/AboutASIM) and supports any built-in or custom source that supports the ASIM DNS schema.",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "let dt_lookBack = 1h;\nlet ioc_lookBack = 14d;\nlet IP_TI = \nThreatIntelligenceIndicator\n| where TimeGenerated \u003e= ago(ioc_lookBack) and ExpirationDateTime \u003e now()\n| summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by IndicatorId\n| where Active == true\n| extend IoC = coalesce(NetworkIP, NetworkDestinationIP, NetworkSourceIP,EmailSourceIpAddress,\"NO_IP\")\n| where IoC != \"NO_IP\"\n;\nIP_TI\n| join kind=innerunique // using innerunique to keep perf fast and result set low, we only need one match to indicate potential malicious activity that needs to be investigated\n(\n_Im_Dns(starttime=ago(dt_lookBack))\n| where isnotempty(DnsResponseName)\n| summarize imDns_mintime=min(TimeGenerated), imDns_maxtime=max(TimeGenerated) by SrcIpAddr, DnsQuery, DnsResponseName, Dvc, EventProduct, EventVendor\n| extend addresses = extract_all (@\u0027(\\d+\\.\\d+\\.\\d+\\.\\d+)\u0027, DnsResponseName)\n| mv-expand IoC = addresses to typeof(string)\n)\non IoC\n| where imDns_mintime \u003c ExpirationDateTime\n| project imDns_mintime, imDns_maxtime, Description, ActivityGroupNames, IndicatorId, ThreatType, LatestIndicatorTime, ExpirationDateTime, ConfidenceScore, SrcIpAddr, IoC, Dvc, EventVendor, EventProduct, DnsQuery, DnsResponseName",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "P14D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "67775878-7f8b-4380-ac54-115e1e828901",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (13).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:23",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:23",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

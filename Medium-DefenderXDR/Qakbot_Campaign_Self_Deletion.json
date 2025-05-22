@@ -1,0 +1,83 @@
+﻿{
+    "RuleId":  "b8256a48-f9b6-4fec-ab30-0b595971635b\u0027)]",
+    "DisplayName":  "Qakbot Campaign Self Deletion",
+    "Description":  "This query was originally published in the threat analytics report, Qakbot blight lingers, seeds ransomware\nQakbot is malware that steals login credentials from banking and financial services. It has been deployed against small businesses as well as major corporations. Some outbreaks have involved targeted ransomware campaigns that use a similar set of techniques. Links to related queries are listed under See also.\nThe following query detects if an instance of Qakbot has attempted to overwrite its original binary.\nReference - https://www.microsoft.com/security/blog/2017/11/06/mitigating-and-eliminating-info-stealing-qakbot-and-emotet-in-corporate-networks/",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "DeviceProcessEvents \n| where FileName =~ \"ping.exe\"\n| where InitiatingProcessFileName =~ \"cmd.exe\"\n| where (InitiatingProcessCommandLine has \"calc.exe\") and (InitiatingProcessCommandLine has \"-n 6\") and (InitiatingProcessCommandLine has \"127.0.0.1\")\n| project TimeGenerated, ProcessCommandLine, InitiatingProcessCommandLine, InitiatingProcessParentFileName, DeviceId, DeviceName\n| extend HostName = iff(DeviceName has \u0027.\u0027, substring(DeviceName, 0, indexof(DeviceName, \u0027.\u0027)), DeviceName)\n| extend DnsDomain = iff(DeviceName has \u0027.\u0027, substring(DeviceName, indexof(DeviceName, \u0027.\u0027) + 1), \"\")\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "DefenseEvasion"
+                ],
+    "Techniques":  [
+                       "T1070"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "47c02e21-3949-4e05-a28e-576cd75ff6f6",
+    "TemplateVersion":  "1.0.0",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Host",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "DeviceName"
+                                                     },
+                                                     {
+                                                         "identifier":  "HostName",
+                                                         "columnName":  "HostName"
+                                                     },
+                                                     {
+                                                         "identifier":  "DnsDomain",
+                                                         "columnName":  "DnsDomain"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:21",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:21",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

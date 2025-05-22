@@ -1,0 +1,100 @@
+﻿{
+    "RuleId":  "4d135e9f-390b-42fe-a719-459b45d440c8\u0027)]",
+    "DisplayName":  "Detect Potential Kerberoast Activities",
+    "Description":  "This query aim to detect if someone requests service tickets (where count =\u003e maxcount)\nThe query requires trimming to set a baseline level for MaxCount  \nMitre Technique: Kerberoasting (T1558.003)\n@MattiasBorg82",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "let MaxCount = 70; //Number of requests per 2 minute timeframe, depending on org size.\nIdentityLogonEvents\n| where ActionType == \"LogonSuccess\"\n| where Protocol == \"Kerberos\"\n| extend json = todynamic(parse_json(tostring(AdditionalFields)))\n| extend SPN = json.Spns,\n       AttackTechniques = json.AttackTechniques\n      | project-away json\n| where isnotempty(SPN)\n| where AttackTechniques has \"T1558.003\"\n| mv-expand SPN\n        | extend SPNType = tostring(extract(@\"^\\w+\",0,tostring(SPN)))\n| distinct tostring(SPN), DeviceName, AccountUpn, AccountSid, bin(TimeGenerated, 2m), ReportId, tostring(AttackTechniques)\n| summarize count(), SPNS=(make_list(SPN, 100000)),ReportId=tostring((make_list(ReportId, 100000))[0]) by AccountUpn,AccountSid,DeviceName, bin(TimeGenerated, 2m), tostring(AttackTechniques)\n| extend SPNS = (replace_regex(tostring(SPNS), @\u0027[^\\w+-\\/]+\u0027, \u0027\u0027)) \n| where count_ \u003e= MaxCount\n| extend HostName = iff(DeviceName has \u0027.\u0027, substring(DeviceName, 0, indexof(DeviceName, \u0027.\u0027)), DeviceName)\n| extend DnsDomain = iff(DeviceName has \u0027.\u0027, substring(DeviceName, indexof(DeviceName, \u0027.\u0027) + 1), \"\")\n| extend AccountDomain = tostring(split(AccountUpn, \u0027@\u0027)[1]), AccountName = tostring(split(AccountUpn, \u0027@\u0027)[0])\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "CredentialAccess"
+                ],
+    "Techniques":  [
+                       "T1558"
+                   ],
+    "SubTechniques":  [
+                          "T1558.003"
+                      ],
+    "AlertRuleTemplateName":  "12134de5-361b-427c-a1a0-d43f40a593c4",
+    "TemplateVersion":  "1.0.0",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Host",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "DeviceName"
+                                                     },
+                                                     {
+                                                         "identifier":  "HostName",
+                                                         "columnName":  "HostName"
+                                                     },
+                                                     {
+                                                         "identifier":  "DnsDomain",
+                                                         "columnName":  "DnsDomain"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "AccountUpn"
+                                                     },
+                                                     {
+                                                         "identifier":  "DnsDomain",
+                                                         "columnName":  "AccountDomain"
+                                                     },
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "AccountName"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:22",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:22",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

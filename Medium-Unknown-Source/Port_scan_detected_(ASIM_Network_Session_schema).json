@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "f06c439c-a9bd-4ea9-8061-855e06e57a3c\u0027)]",
+    "DisplayName":  "Port scan detected  (ASIM Network Session schema)",
+    "Description":  "This rule identifies a possible port scan, in which a single source tries to access a large number of different ports is a short time frame. This may indicate that a [port scanner](https://en.wikipedia.org/wiki/Port_scanner) is trying to identify open ports in order to penetrate a system.\u003cbr\u003e\u003cbr\u003e\nThis analytic rule uses [ASIM](https://aka.ms/AboutASIM) and supports any built-in or custom source that supports the ASIM NetworkSession schema",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "let PortScanThreshold = 50;\n_Im_NetworkSession\n| where ipv4_is_private(SrcIpAddr) == False\n| where SrcIpAddr !in (\"127.0.0.1\", \"::1\")\n| summarize AttemptedPortsCount=dcount(DstPortNumber), AttemptedPorts=make_set(DstPortNumber, 100), ReportedBy=make_set(strcat(EventVendor, \"/\", EventProduct), 20) by SrcIpAddr, bin(TimeGenerated, 5m)\n| where AttemptedPortsCount \u003e PortScanThreshold\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Discovery"
+                ],
+    "Techniques":  [
+                       "T1046"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "1da9853f-3dea-4ea9-b7e5-26730da3d537",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (1).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:20",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:20",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

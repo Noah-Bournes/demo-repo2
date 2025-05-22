@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "01b2e7da-8f2b-4e58-9e80-413192e84370\u0027)]",
+    "DisplayName":  "Azure Active Directory Hybrid Health AD FS New Server",
+    "Description":  "This detection uses AzureActivity logs (Administrative category) to identify the creation or update of a server instance in an Azure AD Hybrid health AD FS service.\nA threat actor can create a new AD Health ADFS service and create a fake server instance to spoof AD FS signing logs. There is no need to compromise an on-prem AD FS server.\nThis can be done programmatically via HTTP requests to Azure. More information in this blog: https://o365blog.com/post/hybridhealthagent/",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "AzureActivity\n| where CategoryValue == \u0027Administrative\u0027\n| where ResourceProviderValue =~ \u0027Microsoft.ADHybridHealthService\u0027\n| where _ResourceId contains \u0027AdFederationService\u0027\n| where OperationNameValue =~ \u0027Microsoft.ADHybridHealthService/services/servicemembers/action\u0027\n| extend claimsJson = parse_json(Claims)\n| extend AppId = tostring(claimsJson.appid)\n| extend AccountName = tostring(claimsJson.name)\n| project-away claimsJson\n| extend timestamp = TimeGenerated, AccountCustomEntity = Caller, IPCustomEntity = CallerIpAddress\n",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P1D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "DefenseEvasion"
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "88f453ff-7b9e-45bb-8c12-4058ca5e44ee",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (2).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:25",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:25",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

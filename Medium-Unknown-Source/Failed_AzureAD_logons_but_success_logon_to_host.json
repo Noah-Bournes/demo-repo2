@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "00d9624e-0909-45b5-8132-44f586563fc3\u0027)]",
+    "DisplayName":  "Failed AzureAD logons but success logon to host",
+    "Description":  "Identifies a list of IP addresses with a minimum number (default of 5) of failed logon attempts to Azure Active Directory.\nUses that list to identify any successful remote logons to hosts from these IPs within the same timeframe.",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "//Adjust this threshold to fit the environment\nlet signin_threshold = 5;\n//Make a list of all IPs with failed signins to AAD above our threshold\nlet aadFunc = (tableName:string){\nlet suspicious_signins =\ntable(tableName)\n| where ResultType !in (\"0\", \"50125\", \"50140\")\n| where IPAddress !in (\u0027127.0.0.1\u0027, \u0027::1\u0027)\n| summarize count() by IPAddress\n| where count_ \u003e signin_threshold\n| summarize make_set(IPAddress);\n//See if any of these IPs have sucessfully logged into *nix hosts\nlet linux_logons =\nSyslog\n| where Facility contains \"auth\" and ProcessName != \"sudo\"\n| where SyslogMessage has \"Accepted\"\n| extend SourceIP = extract(\"(([0-9]{1,3})\\\\.([0-9]{1,3})\\\\.([0-9]{1,3})\\\\.(([0-9]{1,3})))\",1,SyslogMessage)\n| where SourceIP in (suspicious_signins)\n| extend Reason = \"Multiple failed AAD logins from IP address\"\n| project TimeGenerated, Computer, HostIP, IpAddress = SourceIP, SyslogMessage, Facility, ProcessName, Reason;\n//See if any of these IPs have sucessfully logged into Windows hosts\nlet win_logons = (union isfuzzy=true\n(SecurityEvent\n| where EventID == 4624\n| where LogonType in (10, 7, 3)\n| where IpAddress != \"-\"\n| where IpAddress in (suspicious_signins)\n| extend Reason = \"Multiple failed AAD logins from IP address\"\n| project TimeGenerated, Account, AccountType, Computer, Activity, EventID, LogonProcessName, IpAddress, LogonTypeName, TargetUserSid, Reason\n),\n(WindowsEvent\n| where EventID == 4624 and has_any_ipv4(EventData, toscalar(suspicious_signins))\n| extend LogonType = tostring(EventData.LogonType)\n| where LogonType in (10, 7, 3)\n| extend  IpAddress = tostring(EventData.IpAddress)\n| where IpAddress != \"-\"\n| where IpAddress in (suspicious_signins)\n| extend Reason = \"Multiple failed AAD logins from IP address\"\n| extend Activity = \"4624 - An account was successfully logged on.\"\n| extend Account =  strcat(tostring(EventData.TargetDomainName),\"\\\\\", tostring(EventData.TargetUserName))\n| extend TargetUserSid = tostring(EventData.TargetUserSid)\n| extend TargetAccount = strcat(EventData.TargetDomainName,\"\\\\\", EventData.TargetUserName)\n| extend AccountType =case(Account endswith \"$\" or TargetUserSid in (\"S-1-5-18\", \"S-1-5-19\", \"S-1-5-20\"), \"Machine\", isempty(TargetUserSid), \"\", \"User\")\n| extend LogonProcessName = tostring(EventData.LogonProcessName)\n| project TimeGenerated, Account, AccountType, Computer, Activity, EventID, LogonProcessName, IpAddress, TargetUserSid, Reason\n)\n);\nunion isfuzzy=true linux_logons,win_logons\n| extend timestamp = TimeGenerated, AccountCustomEntity = Account, IPCustomEntity = IpAddress, HostCustomEntity = Computer\n};\nlet aadSignin = aadFunc(\"SigninLogs\");\nlet aadNonInt = aadFunc(\"AADNonInteractiveUserSignInLogs\");\nunion isfuzzy=true aadSignin, aadNonInt",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P1D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "8ee967a2-a645-4832-85f4-72b635bcb3a6",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (13).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:23",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:23",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

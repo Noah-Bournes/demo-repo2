@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "98d66d3d-0f4f-4910-a235-94ffa15c1bbe\u0027)]",
+    "DisplayName":  "NRT Creation of expensive computes in Azure",
+    "Description":  "Identifies the creation of large size/expensive VMs (GPU or with large no of virtual CPUs) in Azure.\nAdversary may create new or update existing virtual machines sizes to evade defenses \nor use it for cryptomining purposes.\nFor Windows/Linux Vm Sizes - https://docs.microsoft.com/azure/virtual-machines/windows/sizes \nAzure VM Naming Conventions - https://docs.microsoft.com/azure/virtual-machines/vm-naming-conventions",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "let tokens = dynamic([\"416\",\"208\",\"128\",\"120\",\"96\",\"80\",\"72\",\"64\",\"48\",\"44\",\"40\",\"g5\",\"gs5\",\"g4\",\"gs4\",\"nc12\",\"nc24\",\"nv12\"]);\nlet operationList = dynamic([\"microsoft.compute/virtualmachines/write\", \"microsoft.resources/deployments/write\"]);\nAzureActivity\n| where tolower(OperationNameValue) in (operationList)\n| where ActivityStatusValue == \"Accepted\" \n| where isnotempty(Properties)\n| extend vmSize = tolower(tostring(parse_json(tostring(parse_json(tostring(parse_json(tostring(parse_json(Properties).responseBody)).properties)).hardwareProfile)).vmSize))\n| where isnotempty(vmSize)\n| where vmSize has_any (tokens) \n| extend ComputerName = tostring(parse_json(tostring(parse_json(tostring(parse_json(tostring(parse_json(Properties).responseBody)).properties)).osProfile)).computerName)\n| extend clientIpAddress = tostring(parse_json(HTTPRequest).clientIpAddress)\n| project TimeGenerated, OperationNameValue, ActivityStatusValue, Caller, CallerIpAddress, ComputerName, vmSize\n| extend timestamp = TimeGenerated, AccountCustomEntity = Caller, IPCustomEntity = CallerIpAddress\n",
+    "QueryFrequency":  null,
+    "QueryPeriod":  null,
+    "TriggerOperator":  null,
+    "TriggerThreshold":  null,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "DefenseEvasion"
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "56fe0db0-6779-46fa-b3c5-006082a53064",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "NRT",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (2).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:26",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:26",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

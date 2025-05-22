@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "4f4a6b97-723d-4596-bfed-64b093aa300e\u0027)]",
+    "DisplayName":  "WDigest downgrade attack",
+    "Description":  "When the WDigest Authentication protocol is enabled, plain text passwords are stored in the Local Security Authority Subsystem Service (LSASS) exposing them to theft. This setting will prevent WDigest from storing credentials in memory.\nRef: https://www.stigviewer.com/stig/windows_7/2016-12-19/finding/V-72753",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID in (13)\n| parse EventData with * \u0027TargetObject\"\u003e\u0027 TargetObject \"\u003c\" * \u0027Details\"\u003e\u0027 Details \"\u003c\" * \n| where TargetObject==\"HKLM\\\\System\\\\CurrentControlSet\\\\Control\\\\SecurityProviders\\\\WDigest\\\\UseLogonCredential\" and Details !=\"DWORD (0x00000000)\"\n| summarize StartTimeUtc = min(TimeGenerated), EndTimeUtc = max(TimeGenerated) by EventID, Computer,  TargetObject, Details\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "CredentialAccess"
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "f6502545-ae3a-4232-a8b0-79d87e5c98d7",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (14).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:24",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:24",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

@@ -1,0 +1,92 @@
+﻿{
+    "RuleId":  "12b99291-7f02-4673-bab5-0d8d8ec1420e\u0027)]",
+    "DisplayName":  "MFA Spamming followed by Successful login",
+    "Description":  "Identifies MFA Spamming followed by Successful logins and by a successful authentication within a given time window.\nDefault Failure count is 10 and 1 successful login with default Time Window is 5 minutes.",
+    "Severity":  "High",
+    "Enabled":  true,
+    "Query":  "// Filter for sign-in logs ingested within the last day\nSigninLogs\n| where ingestion_time() \u003e ago(1d)\n// Filter for records with AuthenticationRequirement set to multiFactorAuthentication\n| where AuthenticationRequirement == \"multiFactorAuthentication\"\n// Extract information from dynamic columns DeviceDetail and LocationDetails\n| extend DeviceDetail = todynamic(DeviceDetail), LocationDetails = todynamic(LocationDetails)\n// Extract specific attributes from DeviceDetail and LocationDetails\n| extend\n      OS = tostring(DeviceDetail.operatingSystem),\n      Browser = tostring(DeviceDetail.browser),\n      State = tostring(LocationDetails.state),\n      City = tostring(LocationDetails.city),\n      Region = tostring(LocationDetails.countryOrRegion)\n// Expand multi-value property AuthenticationDetails into separate records\n| mv-expand todynamic(AuthenticationDetails)\n// Parse AuthResult from JSON in AuthenticationDetails and convert to string\n| extend AuthResult = tostring(parse_json(AuthenticationDetails).authenticationStepResultDetail)\n// Summarize data by aggregating statistics for each user, IP, and AuthResult\n| summarize FailedAttempts = countif(AuthResult == \"MFA denied; user declined the authentication\" or AuthResult == \"MFA denied; user did not respond to mobile app notification\"), SuccessfulAttempts = countif(AuthResult == \"MFA successfully completed\"), InvolvedOS = make_set(OS, 5), InvolvedBrowser = make_set(Browser), StartTime = min(TimeGenerated), EndTime = max(TimeGenerated) by UserPrincipalName, IPAddress, State, City, Region\n// Calculate AuthenticationWindow by finding time difference between start and end times\n| extend AuthenticationWindow = (EndTime - StartTime)\n// Filter for records with more than 10 failed attempts in 5-minute window and at least 1 successful attempt\n| where FailedAttempts \u003e 10 and AuthenticationWindow \u003c= 5m and SuccessfulAttempts \u003e= 1\n// Extract user\u0027s name and UPN suffix using split function\n| extend Name = tostring(split(UserPrincipalName, \u0027@\u0027, 0)[0]), UPNSuffix = tostring(split(UserPrincipalName, \u0027@\u0027, 1)[0])\n",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P1D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "CredentialAccess"
+                ],
+    "Techniques":  [
+                       "T1110"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "a8cc6d5c-4e7e-4b48-b4ac-d8a116c62a8b",
+    "TemplateVersion":  "1.0.4",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "UserPrincipalName"
+                                                     },
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "Name"
+                                                     },
+                                                     {
+                                                         "identifier":  "UPNSuffix",
+                                                         "columnName":  "UPNSuffix"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "IP",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Address",
+                                                         "columnName":  "IPAddress"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (14).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:23",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:23",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

@@ -1,0 +1,109 @@
+﻿{
+    "RuleId":  "3f4392d3-b5fe-4e10-a058-a4a3723c69eb\u0027)]",
+    "DisplayName":  "Aqua Blizzard AV hits - Feb 2022",
+    "Description":  "Identifies a match in the Security Alert table for MDATP hits related to the Aqua Blizzard actor",
+    "Severity":  "High",
+    "Enabled":  true,
+    "Query":  "let iocs = externaldata(DateAdded:string,IoC:string,Type:string) [@\"https://raw.githubusercontent.com/Azure/Azure-Sentinel/master/Sample%20Data/Feeds/ActiniumIOC.csv\"] with (format=\"csv\", ignoreFirstRecord=True);\nlet AVHits = (iocs | where Type =~ \"AVDetection\"| project IoC);\nSecurityAlert\n| where ProviderName == \u0027MDATP\u0027\n| extend ThreatName_ = tostring(parse_json(ExtendedProperties).ThreatName)\n| where ThreatName_ has_any (AVHits)\n| extend Directory = tostring(parse_json(Entities)[0].Directory), SHA256 = tostring(parse_json(tostring(parse_json(Entities)[0].FileHashes))[2].Value), FileName = tostring(parse_json(Entities)[0].Name), Hostname = tostring(parse_json(Entities)[6].FQDN)| extend AccountName = tostring(parse_json(tostring(parse_json(Entities)[6].LoggedOnUsers))[0].AccountName)\n| project TimeGenerated, AlertName, ThreatName_, ProviderName, AlertSeverity, Description, RemediationSteps, ExtendedProperties, Entities, FileName,SHA256, Directory, Hostname, AccountName\n| extend FileHash = SHA256, FileHashType = \"SHA256\"\n| extend Name = tostring(split(AccountName, \"@\")[0]), AccountUPNSuffix = tostring(split(AccountName, \"@\")[1])\n| extend Host = tostring(split(Hostname, \".\")[0]), DomainIndex = toint(indexof(Hostname, \u0027.\u0027))\n| extend HostNameDomain = iff(DomainIndex != -1, substring(Hostname, DomainIndex + 1), Hostname)\n",
+    "QueryFrequency":  "PT6H",
+    "QueryPeriod":  "PT6H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Persistence"
+                ],
+    "Techniques":  [
+                       "T1137"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "18dbdc22-b69f-4109-9e39-723d9465f45f",
+    "TemplateVersion":  "1.0.2",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "AccountName"
+                                                     },
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "Name"
+                                                     },
+                                                     {
+                                                         "identifier":  "UPNSuffix",
+                                                         "columnName":  "AccountUPNSuffix"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Host",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "Hostname"
+                                                     },
+                                                     {
+                                                         "identifier":  "HostName",
+                                                         "columnName":  "Name"
+                                                     },
+                                                     {
+                                                         "identifier":  "NTDomain",
+                                                         "columnName":  "HostNameDomain"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "FileHash",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Algorithm",
+                                                         "columnName":  "FileHashType"
+                                                     },
+                                                     {
+                                                         "identifier":  "Value",
+                                                         "columnName":  "FileHash"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (14).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:23",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:23",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

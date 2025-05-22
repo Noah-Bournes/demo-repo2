@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "30d0f65b-4c6f-4747-8ed0-4acc162d7dd8\u0027)]",
+    "DisplayName":  "Lateral Movement via DCOM",
+    "Description":  "This query detects a fairly uncommon attack technique using the Windows Distributed Component Object Model (DCOM) to make a remote execution call to another computer system and gain lateral movement throughout the network.\nRef: http://thenegative.zone/incident%20response/2017/02/04/MMC20.Application-Lateral-Movement-Analysis.html",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID==1\n| parse EventData with * \u0027CommandLine\"\u003e\u0027 CommandLine \"\u003c\" * \u0027ParentCommandLine\"\u003e\u0027 ParentCommandLine \"\u003c\" *\n| where ParentCommandLine == \"C:\\\\Windows\\\\System32\\\\svchost.exe -k DcomLaunch\" and CommandLine == \"C:\\\\Windows\\\\System32\\\\mmc.exe -Embedding\"\n| parse EventData with * \u0027ProcessGuid\"\u003e\u0027 ProcessGuid \"\u003c\" * \u0027Image\"\u003e\u0027 Image \"\u003c\" * \u0027Description\"\u003e\u0027 Description \"\u003c\" * \u0027CurrentDirectory\"\u003e\u0027 CurrentDirectory \"\u003c\" * \u0027User\"\u003e\u0027 User \"\u003c\" * \u0027LogonGuid\"\u003e\u0027 LogonGuid \"\u003c\" * \u0027ParentProcessGuid\"\u003e\u0027 ParentProcessGuid \"\u003c\" * \u0027ParentImage\"\u003e\u0027 ParentImage \"\u003c\" * \u0027ParentCommandLine\"\u003e\u0027 ParentCommandLine \"\u003c\" * \u0027ParentUser\"\u003e\u0027 ParentUser \"\u003c\" *\n| summarize StartTime = min(TimeGenerated), EndTime = max(TimeGenerated) by EventID, Computer, User, ParentImage, ParentProcessGuid, ParentCommandLine, ParentUser, Image, ProcessGuid, CommandLine, Description\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "LateralMovement"
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "50cbf34a-4cdd-45d7-b3f5-8b53a1d0d14f",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (2).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:26",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:26",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

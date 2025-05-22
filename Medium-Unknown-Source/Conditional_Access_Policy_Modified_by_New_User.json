@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "6a711788-0704-4860-984b-9f150ac8f89a\u0027)]",
+    "DisplayName":  "Conditional Access Policy Modified by New User",
+    "Description":  "Detects a Conditional Access Policy being modified by a user who has not modified a policy in the last 14 days.\n  A threat actor may try to modify policies to weaken the security controls in place.\n  Investigate any change to ensure they are approved.\n  Ref: https://docs.microsoft.com/azure/active-directory/fundamentals/security-operations-infrastructure#conditional-access",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "let known_users = (AuditLogs\n  | where TimeGenerated between(ago(14d)..ago(1d))\n  | where OperationName has \"conditional access policy\"\n  | where Result =~ \"success\"\n  | extend userPrincipalName = tostring(parse_json(tostring(InitiatedBy.user)).userPrincipalName)\n  | summarize by userPrincipalName);\n  AuditLogs\n  | where TimeGenerated \u003e ago(1d)\n  | where OperationName has \"conditional access policy\"\n  | where Result =~ \"success\"\n  | extend userPrincipalName = tostring(parse_json(tostring(InitiatedBy.user)).userPrincipalName)\n  | extend CAPolicyName = tostring(TargetResources[0].displayName)\n  | extend ipAddress = tostring(parse_json(tostring(InitiatedBy.user)).ipAddress)\n  | where userPrincipalName !in (known_users)\n  | extend NewPolicyValues = TargetResources[0].modifiedProperties[0].newValue\n  | extend OldPolicyValues = TargetResources[0].modifiedProperties[0].oldValue\n  | project-reorder TimeGenerated, OperationName, CAPolicyName, userPrincipalName, ipAddress, NewPolicyValues, OldPolicyValues",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P14D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "25a7f951-54b7-4cf5-9862-ebc04306c590",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (13).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:23",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:23",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

@@ -1,0 +1,99 @@
+﻿{
+    "RuleId":  "3aef7c5e-a001-4cd1-8a1b-8991fa64bf44\u0027)]",
+    "DisplayName":  "Unusual Volume of file deletion by users",
+    "Description":  "This query looks for users performing file deletion activities. Spikes in file deletion observed from risky sign-in sessions are flagged here.\nThis applies to SharePoint and OneDrive users.\nAudit event and Cloud application identifier references.\nReference - https://learn.microsoft.com/microsoft-365/compliance/audit-log-activities?view=o365-worldwide\nReference - https://learn.microsoft.com/azure/sentinel/entities-reference#cloud-application-identifiers",
+    "Severity":  "High",
+    "Enabled":  true,
+    "Query":  "let relevantOperations = pack_array(\"FileDeleted\", \"FileRecycled\", \"FileDeletedFirstStageRecycleBin\", \"FileDeletedSecondStageRecycleBin\", \"FileVersionsAllMinorsRecycled\", \"FileVersionRecycled\", \"FileVersionsAllRecycled\");\nlet relevantAppIds = pack_array(int(20892), int(15600)); // App Ids for SharePoint and OneDrive\nlet timeWindow = 7d;\nlet timeNow = now();\n//\nlet riskyUsers= // Look for users with risky sign-ins\n  SigninLogs    \n  | where CreatedDateTime between ((timeNow - timeWindow) .. (timeNow))\n  | where isnotempty(UserId) and isnotempty(OriginalRequestId)\n  | where ResultType == \u00270\u0027\n  | where RiskLevelDuringSignIn == \u0027high\u0027\n  | project RiskLevelDuringSignIn, UserId, CreatedDateTime, SessionId=OriginalRequestId\n  ;\nlet hasUsers = isnotempty(toscalar(riskyUsers));\n//\nlet deleteEvents = // look for file deletion activity and scope it to risky users\n  CloudAppEvents\n  | where hasUsers\n  | where TimeGenerated between ((timeNow - timeWindow) .. (timeNow))\n  | where ApplicationId in (relevantAppIds)\n  | where isnotempty(AccountObjectId)\n  | where AccountObjectId in (riskyUsers)\n  | where ActionType in (relevantOperations)\n  | extend SessionId= tostring(RawEventData.AppAccessContext.AADSessionId)\n  | where isnotempty(SessionId)\n  | project UserId=AccountObjectId, AccountDisplayName, ApplicationId, SessionId, ActionType, TimeGenerated, ReportId\n  ;   \n //\ndeleteEvents  \n| join kind=leftsemi riskyUsers on UserId, SessionId\n| summarize Count=count() , (Timestamp, ReportId)=arg_min(TimeGenerated, ReportId) by UserId, AccountDisplayName, ApplicationId, ActionType, Time=bin(TimeGenerated, 5m)\n// look for only those scoped users who have generated an increase in file deletion activity.\n| summarize TotalCount= countif(Count \u003e 50), (Timestamp, ReportId)=arg_min(Timestamp, ReportId) by UserId, AccountDisplayName, ApplicationId \n| where TotalCount \u003e= 3\n| project UserId, AccountDisplayName, ApplicationId, TotalCount, ReportId, Timestamp\n| extend NTDomain = tostring(split(AccountDisplayName,\u0027\\\\\u0027,0)[0]), Name = tostring(split(AccountDisplayName,\u0027\\\\\u0027,1)[0])\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Impact"
+                ],
+    "Techniques":  [
+                       "T1485"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "e5f8e196-3544-4a8b-96a9-17c1b6a49710",
+    "TemplateVersion":  "1.0.1",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "AadUserId",
+                                                         "columnName":  "UserId"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "Name"
+                                                     },
+                                                     {
+                                                         "identifier":  "NTDomain",
+                                                         "columnName":  "NTDomain"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "CloudApplication",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "AppId",
+                                                         "columnName":  "ApplicationId"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  {
+                          "Count":  "TotalCount"
+                      },
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:22",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:22",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

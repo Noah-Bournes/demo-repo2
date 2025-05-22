@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "47f095cb-3e40-4267-9d3e-8c1865ab5324\u0027)]",
+    "DisplayName":  "Application ID URI Changed",
+    "Description":  "Detects changes to an Application ID URI.\n  Monitor these changes to make sure that they were authorized.\n  Ref: https://docs.microsoft.com/azure/active-directory/fundamentals/security-operations-applications#appid-uri-added-modified-or-removed",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "AuditLogs\n  | where Category == \"ApplicationManagement\"\n  | where OperationName has_any (\"Update Application\", \"Update Service principal\")\n  | extend appName = tostring(parse_json(tostring(InitiatedBy.app)).displayName)\n  | extend UPN = tostring(parse_json(tostring(InitiatedBy.user)).userPrincipalName)\n  | extend UpdatedBy = iif(isnotempty(appName), appName, UPN)\n  | extend mod_props = TargetResources[0].modifiedProperties\n  | extend AppName = tostring(TargetResources[0].displayName)\n  | mv-expand mod_props\n  | where mod_props.displayName has \"AppIdentifierUri\"\n  | extend OldURI = tostring(mod_props.oldValue)\n  | extend NewURI = tostring(mod_props.newValue)\n  | project-reorder TimeGenerated, OperationName, AppName, OldURI, NewURI, UpdatedBy",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P1D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "9fb2ee72-959f-4c2b-bc38-483affc539e4",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (13).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:23",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:23",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

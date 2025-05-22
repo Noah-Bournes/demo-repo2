@@ -1,0 +1,138 @@
+﻿{
+    "RuleId":  "115071b0-9bc0-4aaa-9916-e4403e3f2e6f\u0027)]",
+    "DisplayName":  "Suspicious Sign In Followed by MFA Modification",
+    "Description":  "This query looks uses Microsoft Sentinel\u0027s UEBA features to look for suspicious logons followed by modifications to MFA settings by that user.",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "let PriorityScore = 9;\nBehaviorAnalytics\n| where ActionType == \"Sign-in\"\n| where InvestigationPriority \u003e PriorityScore\n| extend UserPrincipalName = tolower(UserPrincipalName)\n| extend LogOnTime = TimeGenerated\n| join kind=inner (AuditLogs\n| where Category =~ \"UserManagement\" \n| where OperationName in~ (\"Admin registered security info\", \"Admin updated security info\", \"Admin deleted security info\", \"User registered security info\", \"User changed default security info\", \"User deleted security info\",\"User registered all required security info\",\"User started security info registration\") \n| extend InitiatorUPN = tolower(tostring(InitiatedBy.user.userPrincipalName))\n| extend InitiatorID = tostring(InitiatedBy.user.id)\n| extend FromIP = tostring(InitiatedBy.user.ipAddress) \n| extend TargetUPN = tolower(tostring(TargetResources[0].userPrincipalName))\n| extend TargetId = tostring(TargetResources[0].id)\n| extend MFAModTime = TimeGenerated\n| where isnotempty(InitiatorUPN)) on $left.UserPrincipalName == $right.InitiatorUPN\n| where MFAModTime between((LogOnTime-30m)..(LogOnTime+1h))\n| extend InitiatorName = tostring(split(InitiatorUPN, \"@\")[0]), InitiatorUPNSuffix = tostring(split(InitiatorUPN, \"@\")[1]), TargetName = tostring(split(TargetUPN, \"@\")[0]), TargetUPNSuffix = tostring(split(TargetUPN, \"@\")[1])\n",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P1D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "InitialAccess",
+                    "DefenseEvasion"
+                ],
+    "Techniques":  [
+                       "T1078",
+                       "T1556"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "aec77100-25c5-4254-a20a-8027ed92c46c",
+    "TemplateVersion":  "1.0.1",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "InitiatorUPN"
+                                                     },
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "InitiatorName"
+                                                     },
+                                                     {
+                                                         "identifier":  "UPNSuffix",
+                                                         "columnName":  "InitiatorUPNSuffix"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "AadUserId",
+                                                         "columnName":  "InitiatorID"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "TargetUPN"
+                                                     },
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "TargetName"
+                                                     },
+                                                     {
+                                                         "identifier":  "UPNSuffix",
+                                                         "columnName":  "TargetUPNSuffix"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "AadUserId",
+                                                         "columnName":  "TargetId"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "IP",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Address",
+                                                         "columnName":  "FromIP"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "IP",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Address",
+                                                         "columnName":  "SourceIPAddress"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "AlertPerResult"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (14).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:24",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:24",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

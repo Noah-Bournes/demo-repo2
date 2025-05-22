@@ -1,0 +1,62 @@
+﻿{
+    "TenantName":  "Crisk",
+    "FirstProcessed":  "2025-05-22 16:24:36",
+    "ProcessingHistory":  [
+                              {
+                                  "ProcessingDate":  "2025-05-22 16:24:43",
+                                  "FilesProcessed":  5,
+                                  "FileList":  [
+                                                   "Azure_Sentinel_analytics_rules (1).json",
+                                                   "Azure_Sentinel_analytics_rules (12).json",
+                                                   "Azure_Sentinel_analytics_rules (13).json",
+                                                   "Azure_Sentinel_analytics_rules (14).json",
+                                                   "Azure_Sentinel_analytics_rules (2).json"
+                                               ],
+                                  "RulesProcessed":  237,
+                                  "NewRules":  0,
+                                  "UpdatedRules":  4,
+                                  "UnchangedRules":  233,
+                                  "ProcessedBy":  "NoahBournes"
+                              },
+                              {
+                                  "ProcessingDate":  "2025-05-22 16:33:34",
+                                  "FilesProcessed":  5,
+                                  "FileList":  [
+                                                   "Azure_Sentinel_analytics_rules (1).json",
+                                                   "Azure_Sentinel_analytics_rules (12).json",
+                                                   "Azure_Sentinel_analytics_rules (13).json",
+                                                   "Azure_Sentinel_analytics_rules (14).json",
+                                                   "Azure_Sentinel_analytics_rules (2).json"
+                                               ],
+                                  "RulesProcessed":  237,
+                                  "NewRules":  0,
+                                  "UpdatedRules":  4,
+                                  "UnchangedRules":  233,
+                                  "ProcessedBy":  "NoahBournes",
+                                  "ChangedRules":  [
+
+                                                   ]
+                              },
+                              {
+                                  "ProcessingDate":  "2025-05-22 17:25:31",
+                                  "FilesProcessed":  5,
+                                  "FileList":  [
+                                                   "Azure_Sentinel_analytics_rules (1).json",
+                                                   "Azure_Sentinel_analytics_rules (12).json",
+                                                   "Azure_Sentinel_analytics_rules (13).json",
+                                                   "Azure_Sentinel_analytics_rules (14).json",
+                                                   "Azure_Sentinel_analytics_rules (2).json"
+                                               ],
+                                  "RulesProcessed":  237,
+                                  "NewRules":  0,
+                                  "UpdatedRules":  4,
+                                  "UnchangedRules":  233,
+                                  "ProcessedBy":  "NoahBournes",
+                                  "ChangedRules":  [
+
+                                                   ]
+                              }
+                          ],
+    "TotalProcessingRuns":  3,
+    "LastProcessed":  "2025-05-22 17:25:31"
+}

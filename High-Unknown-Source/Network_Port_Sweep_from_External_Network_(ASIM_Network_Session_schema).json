@@ -1,0 +1,138 @@
+﻿{
+    "RuleId":  "a4f3a7c3-9fc9-4f17-a9a5-ff7aa31ec1cd\u0027)]",
+    "DisplayName":  "Network Port Sweep from External Network (ASIM Network Session schema)",
+    "Description":  "This detection rule detects scenarios when a particular port is being scanned by multiple external sources. The rule utilize [ASIM](https://aka.ms/AboutASIM) normalization, and is applied to any source which supports the ASIM Network Session schema.",
+    "Severity":  "High",
+    "Enabled":  true,
+    "Query":  "let lookback = 1h;\nlet threshold = 20;\n_Im_NetworkSession(starttime=ago(lookback),endtime=now())\n| where NetworkDirection == \"Inbound\"\n| summarize make_set(DstIpAddr,100) by DstPortNumber\n| where array_length(set_DstIpAddr) \u003e threshold\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Discovery"
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "fcb9d75c-c3c1-4910-8697-f136bfef2363",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (14).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:21",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           },
+                           {
+                               "Date":  "2025-05-22 16:19:24",
+                               "Version":  "1.1",
+                               "Action":  "Updated",
+                               "Changes":  [
+                                               "SuppressionDuration changed from \u0027PT1H\u0027 to \u0027PT5H\u0027",
+                                               "Tactics changed from [Discovery,Reconnaissance] to [Discovery]",
+                                               "Techniques changed from [T1046,T1590] to []"
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           },
+                           {
+                               "Date":  "2025-05-22 16:24:38",
+                               "Version":  "1.2",
+                               "Action":  "Updated",
+                               "Changes":  [
+                                               "SuppressionDuration changed from \u0027PT5H\u0027 to \u0027PT1H\u0027",
+                                               "Tactics changed from [Discovery] to [Discovery,Reconnaissance]",
+                                               "Techniques changed from [] to [T1046,T1590]"
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           },
+                           {
+                               "Date":  "2025-05-22 16:24:41",
+                               "Version":  "1.3",
+                               "Action":  "Updated",
+                               "Changes":  [
+                                               "SuppressionDuration changed from \u0027PT1H\u0027 to \u0027PT5H\u0027",
+                                               "Tactics changed from [Discovery,Reconnaissance] to [Discovery]",
+                                               "Techniques changed from [T1046,T1590] to []"
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           },
+                           {
+                               "Date":  "2025-05-22 16:33:18",
+                               "Version":  "1.4",
+                               "Action":  "Updated",
+                               "Changes":  [
+                                               "SuppressionDuration changed from \u0027PT5H\u0027 to \u0027PT1H\u0027",
+                                               "Tactics changed from [Discovery] to [Discovery,Reconnaissance]",
+                                               "Techniques changed from [] to [T1046,T1590]"
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           },
+                           {
+                               "Date":  "2025-05-22 16:33:27",
+                               "Version":  "1.5",
+                               "Action":  "Updated",
+                               "Changes":  [
+                                               "SuppressionDuration changed from \u0027PT1H\u0027 to \u0027PT5H\u0027",
+                                               "Tactics changed from [Discovery,Reconnaissance] to [Discovery]",
+                                               "Techniques changed from [T1046,T1590] to []"
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           },
+                           {
+                               "Date":  "2025-05-22 17:25:15",
+                               "Version":  "1.6",
+                               "Action":  "Updated",
+                               "Changes":  [
+                                               "SuppressionDuration changed from \u0027PT5H\u0027 to \u0027PT1H\u0027",
+                                               "Tactics changed from [Discovery] to [Discovery,Reconnaissance]",
+                                               "Techniques changed from [] to [T1046,T1590]"
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           },
+                           {
+                               "Date":  "2025-05-22 17:25:24",
+                               "Version":  "1.7",
+                               "Action":  "Updated",
+                               "Changes":  [
+                                               "SuppressionDuration changed from \u0027PT1H\u0027 to \u0027PT5H\u0027",
+                                               "Tactics changed from [Discovery,Reconnaissance] to [Discovery]",
+                                               "Techniques changed from [T1046,T1590] to []"
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 17:25:24",
+    "CurrentVersion":  "1.7",
+    "OriginTenant":  "Crisk"
+}

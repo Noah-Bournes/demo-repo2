@@ -1,0 +1,110 @@
+﻿{
+    "RuleId":  "3b6fc960-af4c-4bf7-a620-6d6cbf479081\u0027)]",
+    "DisplayName":  "Account created or deleted by non-approved user",
+    "Description":  "Identifies accounts that were created or deleted by a defined list of non-approved user principal names. Add to this list before running the query for accurate results.\nRef : https://docs.microsoft.com/azure/active-directory/fundamentals/security-operations-user-accounts",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "// Add non-approved user principal names or apps to the list below to search for their account creation/deletion activity\n// ex: dynamic([\"UPN1\", \"upn123\"])\nlet nonapproved_users = dynamic([]);\nlet nonapproved_apps = dynamic([]);\nAuditLogs\n| where OperationName =~ \"Add user\" or OperationName =~ \"Delete user\"\n| where Result =~ \"success\"\n| extend InitiatingAppName = tostring(InitiatedBy.app.displayName)\n| extend InitiatingAppServicePrincipalId = tostring(InitiatedBy.app.servicePrincipalId)\n| extend InitiatingUserPrincipalName = tostring(InitiatedBy.user.userPrincipalName)\n| extend InitiatingAadUserId = tostring(InitiatedBy.user.id)\n| extend InitiatingIpAddress = tostring(iff(isnotempty(InitiatedBy.user.ipAddress), InitiatedBy.user.ipAddress, InitiatedBy.app.ipAddress))\n| where InitiatingUserPrincipalName has_any (nonapproved_users) or InitiatingAppName has_any (nonapproved_apps)\n| extend InitiatingAccountName = tostring(split(InitiatingUserPrincipalName, \"@\")[0]), InitiatingAccountUPNSuffix = tostring(split(InitiatingUserPrincipalName, \"@\")[1])\n",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P1D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "InitialAccess"
+                ],
+    "Techniques":  [
+                       "T1078"
+                   ],
+    "SubTechniques":  [
+                          "T1078.004"
+                      ],
+    "AlertRuleTemplateName":  "6d63efa6-7c25-4bd4-a486-aa6bf50fde8a",
+    "TemplateVersion":  "1.1.1",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "InitiatingAppName"
+                                                     },
+                                                     {
+                                                         "identifier":  "AadUserId",
+                                                         "columnName":  "InitiatingAppServicePrincipalId"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "InitiatingUserPrincipalName"
+                                                     },
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "InitiatingAccountName"
+                                                     },
+                                                     {
+                                                         "identifier":  "UPNSuffix",
+                                                         "columnName":  "InitiatingAccountUPNSuffix"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "AadUserId",
+                                                         "columnName":  "InitiatingAadUserId"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "IP",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Address",
+                                                         "columnName":  "InitiatingIpAddress"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (14).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:23",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:23",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

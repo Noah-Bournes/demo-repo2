@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "82000989-9aa2-4c21-b704-a9c615b11193\u0027)]",
+    "DisplayName":  "URL Added to Application from Unknown Domain",
+    "Description":  "Detects a URL being added to an application where the domain is not one that is associated with the tenant.\n  The query uses domains seen in sign in logs to determine if the domain is associated with the tenant.\n  Applications associated with URLs not controlled by the organization can pose a security risk.\n  Ref: https://docs.microsoft.com/azure/active-directory/fundamentals/security-operations-applications#application-configuration-changes",
+    "Severity":  "High",
+    "Enabled":  true,
+    "Query":  "let domains =\n  SigninLogs\n  | where ResultType == 0\n  | extend domain = split(UserPrincipalName, \"@\")[1]\n  | extend domain = tostring(split(UserPrincipalName, \"@\")[1])\n  | summarize by tolower(tostring(domain));\n  AuditLogs\n  | where Category =~ \"ApplicationManagement\"\n  | where Result =~ \"success\"\n  | where OperationName =~ \u0027Update Application\u0027\n  | mv-expand TargetResources\n  | mv-expand TargetResources.modifiedProperties\n  | where TargetResources_modifiedProperties.displayName =~ \"AppAddress\"\n  | extend Key = tostring(TargetResources_modifiedProperties.displayName)\n  | extend NewValue = TargetResources_modifiedProperties.newValue\n  | extend OldValue = TargetResources_modifiedProperties.oldValue\n  | where isnotempty(Key) and isnotempty(NewValue)\n  | project-reorder Key, NewValue, OldValue\n  | extend NewUrls = extract_all(\u0027\"Address\":([^,]*)\u0027, tostring(NewValue))\n  | extend OldUrls = extract_all(\u0027\"Address\":([^,]*)\u0027, tostring(OldValue))\n  | extend AddedUrls = set_difference(NewUrls, OldUrls)\n  | where array_length(AddedUrls) \u003e 0\n  | extend UserAgent = iif(tostring(AdditionalDetails[0].key) == \"User-Agent\", tostring(AdditionalDetails[0].value), \"\")\n  | extend AddingUser = iif(isnotempty(tostring(parse_json(tostring(InitiatedBy.user)).userPrincipalName)) , tostring(parse_json(tostring(InitiatedBy.user)).userPrincipalName), \"\")\n  | extend AddingApp = iif(isnotempty(tostring(parse_json(tostring(InitiatedBy.app)).servicePrincipalName)) , tostring(parse_json(tostring(InitiatedBy.app)).servicePrincipalName), \"\")\n  | extend AddedBy = iif(isnotempty(AddingUser), AddingUser, AddingApp)\n  | project-away AddingApp, AddingUser\n  | extend AppDisplayName = tostring(TargetResources.displayName)\n  | extend ipAddress = tostring(parse_json(tostring(InitiatedBy.user)).ipAddress)\n  | where isnotempty(AddedUrls)\n  | mv-expand AddedUrls\n  | extend Domain = extract(\"^(?:https?:\\\\/\\\\/)?(?:[^@\\\\/\\\\n]+@)?(?:www\\\\.)?([^:\\\\/?\\\\n]+)/\", 1, replace_string(tolower(tostring(AddedUrls)), \u0027\"\u0027, \"\"))\n  | where isnotempty(Domain)\n  | extend Domain = strcat(split(Domain, \".\")[-2], \".\", split(Domain, \".\")[-1])\n  | where Domain !in (domains)\n  | project-reorder TimeGenerated, AppDisplayName, AddedUrls, AddedBy, UserAgent, ipAddress",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P1D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "017e095a-94d8-430c-a047-e51a11fb737b",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (1).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:20",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:20",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

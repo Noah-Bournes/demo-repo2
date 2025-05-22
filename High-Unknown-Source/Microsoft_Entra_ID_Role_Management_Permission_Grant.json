@@ -1,0 +1,126 @@
+﻿{
+    "RuleId":  "b724bb17-c0c2-479b-8362-e0ba6985b8a0\u0027)]",
+    "DisplayName":  "Microsoft Entra ID Role Management Permission Grant",
+    "Description":  "Identifies when the Microsoft Graph RoleManagement.ReadWrite.Directory (Delegated or Application) permission is granted to a service principal.\nThis permission allows an application to read and manage the role-based access control (RBAC) settings for your company\u0027s directory.\nAn adversary could use this permission to add an Microsoft Entra ID object to an Admin directory role and escalate privileges.\nRef : https://docs.microsoft.com/graph/permissions-reference#role-management-permissions\nRef : https://docs.microsoft.com/graph/api/directoryrole-post-members?view=graph-rest-1.0\u0026tabs=http",
+    "Severity":  "High",
+    "Enabled":  true,
+    "Query":  "AuditLogs\n| where Category =~ \"ApplicationManagement\" and LoggedByService =~ \"Core Directory\" and OperationName in~ (\"Add delegated permission grant\", \"Add app role assignment to service principal\")\n| mv-apply TargetResource = TargetResources on\n  (\n      where TargetResource.type =~ \"ServicePrincipal\" and array_length(TargetResource.modifiedProperties) \u003e 0 and isnotnull(TargetResource.displayName)\n      | extend props = TargetResource.modifiedProperties\n  )\n| mv-apply Property = props on\n  (\n      where Property.displayName in~ (\"AppRole.Value\",\"DelegatedPermissionGrant.Scope\")\n      | extend DisplayName = tostring(Property.displayName), PermissionGrant = trim(\u0027\"\u0027,tostring(Property.newValue))\n  )\n| where PermissionGrant has \"RoleManagement.ReadWrite.Directory\"\n| mv-apply Property = props on\n  (\n      where Property.displayName =~ \"ServicePrincipal.DisplayName\"\n      | extend TargetAppDisplayName = trim(\u0027\"\u0027,tostring(Property.newValue))\n  )\n| mv-apply Property = props on\n  (\n      where Property.displayName =~ \"ServicePrincipal.ObjectID\"\n      | extend TargetAppServicePrincipalId = trim(\u0027\"\u0027,tostring(Property.newValue))\n  )\n| extend InitiatingAppName = tostring(InitiatedBy.app.displayName)\n| extend InitiatingAppServicePrincipalId = tostring(InitiatedBy.app.servicePrincipalId)\n| extend InitiatingUserPrincipalName = tostring(InitiatedBy.user.userPrincipalName)\n| extend InitiatingAadUserId = tostring(InitiatedBy.user.id)\n| extend InitiatingIpAddress = tostring(iff(isnotempty(InitiatedBy.user.ipAddress), InitiatedBy.user.ipAddress, InitiatedBy.app.ipAddress))\n| project TimeGenerated, OperationName, Result, PermissionGrant, TargetAppDisplayName, TargetAppServicePrincipalId, InitiatingAppName, InitiatingAppServicePrincipalId,\nInitiatingUserPrincipalName, InitiatingAadUserId, InitiatingIpAddress, TargetResources, AdditionalDetails, CorrelationId\n| extend InitiatingAccountName = tostring(split(InitiatingUserPrincipalName, \"@\")[0]), InitiatingAccountUPNSuffix = tostring(split(InitiatingUserPrincipalName, \"@\")[1])\n",
+    "QueryFrequency":  "PT2H",
+    "QueryPeriod":  "PT2H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Persistence",
+                    "Impact"
+                ],
+    "Techniques":  [
+                       "T1098",
+                       "T1078"
+                   ],
+    "SubTechniques":  [
+                          "T1098.003",
+                          "T1078.004"
+                      ],
+    "AlertRuleTemplateName":  "1ff56009-db01-4615-8211-d4fda21da02d",
+    "TemplateVersion":  "1.1.1",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "TargetAppDisplayName"
+                                                     },
+                                                     {
+                                                         "identifier":  "AadUserId",
+                                                         "columnName":  "TargetAppServicePrincipalId"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "InitiatingAppName"
+                                                     },
+                                                     {
+                                                         "identifier":  "AadUserId",
+                                                         "columnName":  "InitiatingAppServicePrincipalId"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "InitiatingUserPrincipalName"
+                                                     },
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "InitiatingAccountName"
+                                                     },
+                                                     {
+                                                         "identifier":  "UPNSuffix",
+                                                         "columnName":  "InitiatingAccountUPNSuffix"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "AadUserId",
+                                                         "columnName":  "InitiatingAadUserId"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "IP",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Address",
+                                                         "columnName":  "InitiatingIpAddress"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (14).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:23",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:23",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

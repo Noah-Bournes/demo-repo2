@@ -1,0 +1,97 @@
+﻿{
+    "RuleId":  "9039a034-d5ea-41a1-b085-44ec38b16972\u0027)]",
+    "DisplayName":  "GreyNoise TI map IP entity to OfficeActivity",
+    "Description":  "This query maps any GreyNoise IP indicators of compromise (IOCs) from threat intelligence (TI), by searching for matches in OfficeActivity.",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "let dt_lookBack = 1h; // Look back 1 hour for OfficeActivity events\nlet ioc_lookBack = 14d; // Look back 14 days for threat intelligence indicators\n// Fetch threat intelligence indicators related to IP addresses\nlet IP_Indicators = ThreatIntelligenceIndicator\n  | where TimeGenerated \u003e= ago(ioc_lookBack)\n  | summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by IndicatorId\n  | where Active == true and ExpirationDateTime \u003e now()\n  | where SourceSystem == \u0027GreyNoise\u0027\n  | where isnotempty(NetworkIP) or isnotempty(EmailSourceIpAddress) or isnotempty(NetworkDestinationIP) or isnotempty(NetworkSourceIP)\n  | extend TI_ipEntity = iff(isnotempty(NetworkIP), NetworkIP, NetworkDestinationIP)\n  | extend TI_ipEntity = iff(isempty(TI_ipEntity) and isnotempty(NetworkSourceIP), NetworkSourceIP, TI_ipEntity)\n  | extend TI_ipEntity = iff(isempty(TI_ipEntity) and isnotempty(EmailSourceIpAddress), EmailSourceIpAddress, TI_ipEntity)\n  | where ipv4_is_private(TI_ipEntity) == false and  TI_ipEntity !startswith \"fe80\" and TI_ipEntity !startswith \"::\" and TI_ipEntity !startswith \"127.\";\n// Perform a join between IP indicators and OfficeActivity events\nIP_Indicators\n  // Use innerunique to keep performance fast and result set low, as we only need one match to indicate potential malicious activity that needs investigation\n  | join kind=innerunique (\n      OfficeActivity\n      | where TimeGenerated \u003e= ago(dt_lookBack)\n      | where isnotempty(ClientIP)\n      | extend ClientIPValues = extract_all(@\u0027\\[?(::ffff:)?(?P\u003cIPAddress\u003e(\\d+\\.\\d+\\.\\d+\\.\\d+)|[^\\]%]+)(%\\d+)?\\]?([-:](?P\u003cPort\u003e\\d+))?\u0027, dynamic([\"IPAddress\", \"Port\"]), ClientIP)[0]\n      | extend IPAddress = iff(array_length(ClientIPValues) \u003e 0, tostring(ClientIPValues[0]), \u0027\u0027)\n      | extend OfficeActivity_TimeGenerated = TimeGenerated\n  )\n  on $left.TI_ipEntity == $right.IPAddress\n  // Filter out OfficeActivity events that occurred after the expiration of the corresponding indicator\n  | where OfficeActivity_TimeGenerated \u003c ExpirationDateTime\n  // Group the results by IndicatorId and keep the OfficeActivity event with the latest timestamp\n  | summarize OfficeActivity_TimeGenerated = arg_max(OfficeActivity_TimeGenerated, *) by IndicatorId\n  // Select the desired output fields\n  | project OfficeActivity_TimeGenerated, Description, ActivityGroupNames, IndicatorId, ThreatType, Url, ExpirationDateTime, ConfidenceScore,\n    TI_ipEntity, ClientIP, UserId, Operation, ResultStatus, RecordType, OfficeObjectId, NetworkIP, NetworkDestinationIP, NetworkSourceIP, EmailSourceIpAddress, Type\n  | extend timestamp = OfficeActivity_TimeGenerated, Name = tostring(split(UserId, \u0027@\u0027, 0)[0]), UPNSuffix = tostring(split(UserId, \u0027@\u0027, 1)[0])\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "P14D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Impact"
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "c51628fe-999c-5150-9fd7-660fc4f58ed2",
+    "TemplateVersion":  "1.0.0",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "Name"
+                                                     },
+                                                     {
+                                                         "identifier":  "UPNSuffix",
+                                                         "columnName":  "UPNSuffix"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "IP",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Address",
+                                                         "columnName":  "TI_ipEntity"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "URL",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Url",
+                                                         "columnName":  "Url"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (14).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:24",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:24",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

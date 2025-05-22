@@ -1,0 +1,87 @@
+﻿{
+    "RuleId":  "56a800f4-a5fa-4c2d-9ea2-b9302e77fc69\u0027)]",
+    "DisplayName":  "Deimos Component Execution",
+    "Description":  "Jupyter, otherwise known as SolarMarker, is a malware family and cluster of components known for its info-stealing and backdoor capabilities that mainly proliferates through search engine optimization manipulation and malicious advertising in order to successfully encourage users to download malicious templates and documents. This malware has been popular since 2020 and currently is still active as of 2021.",
+    "Severity":  "High",
+    "Enabled":  true,
+    "Query":  "DeviceEvents   \n| where InitiatingProcessFileName =~ \"powershell.exe\"\n| where ActionType == \"AmsiScriptContent\"\n| where AdditionalFields endswith \u0027[mArS.deiMos]::inteRaCt()\"}\u0027\n| project InitiatingProcessParentFileName, InitiatingProcessFileName, InitiatingProcessCommandLine, ActionType, AdditionalFields, DeviceName\n| extend HostName = iff(DeviceName has \u0027.\u0027, substring(DeviceName, 0, indexof(DeviceName, \u0027.\u0027)), DeviceName)\n| extend DnsDomain = iff(DeviceName has \u0027.\u0027, substring(DeviceName, indexof(DeviceName, \u0027.\u0027) + 1), \"\")\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Execution",
+                    "Collection",
+                    "Exfiltration"
+                ],
+    "Techniques":  [
+                       "T1059",
+                       "T1005",
+                       "T1020"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "c25a8cd4-5b4a-45a8-9ba0-3b753a652f6b",
+    "TemplateVersion":  "1.0.0",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Host",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "DeviceName"
+                                                     },
+                                                     {
+                                                         "identifier":  "HostName",
+                                                         "columnName":  "HostName"
+                                                     },
+                                                     {
+                                                         "identifier":  "DnsDomain",
+                                                         "columnName":  "DnsDomain"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:22",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:22",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

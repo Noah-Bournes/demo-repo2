@@ -1,0 +1,115 @@
+﻿{
+    "RuleId":  "78f4d36a-f889-4e64-aa8a-8a3ee5beecd7\u0027)]",
+    "DisplayName":  "Potential Ransomware activity related to Cobalt Strike",
+    "Description":  "This query searches for alerts related to suspected ransomware and Cobalt Strike activity, a tool used in numerous ransomware campaigns. It looks for alerts that indicate potential ransomware activity, such as attempts to clear security event logs, delete backup files, and execute Cobalt Strike malware.",
+    "Severity":  "High",
+    "Enabled":  true,
+    "Query":  "// Look for sc.exe disabling services\nAlertInfo \n// Attempts to clear security event logs. \n| where Title in(\"Event log was cleared\", \n// List alerts flagging attempts to delete backup files. \n\"File backups were deleted\", \n// Potential Cobalt Strike activity - Note that other threat activity can also \n// trigger alerts for suspicious decoded content \n\"Suspicious decoded content\", \n// Cobalt Strike activity \n\"\\\u0027Atosev\\\u0027 malware was detected\", \n\"\\\u0027Ploty\\\u0027 malware was detected\", \n\"\\\u0027Bynoco\\\u0027 malware was detected\",\n\"\\\u0027Cobaltstrike\\\u0027 malware was detected\",\n\"Echo command over pipe on localhost\",\n\"Known attack framework activity was observed\",\n\"An active \\\u0027Cobaltstrike\\\u0027 malware was detected\",\n\"Suspicious \\\u0027CobaltStrike\\\u0027 behavior was prevented\",\n\"Suspicious process launch by Rundll32.exe\") \n| extend AlertTime = TimeGenerated | distinct AlertTime, AlertId, Title \n| join AlertEvidence on $left.AlertId == $right.AlertId\n| summarize by DeviceId, AlertTime, Title, AlertId\n// Get device IDs\n| join DeviceLogonEvents on $left.DeviceId == $right.DeviceId \n// Creating 10 day Window surrounding alert activity \n| where TimeGenerated \u003c AlertTime + 12h and TimeGenerated \u003e AlertTime - 12h // Projecting specific columns \n| project Title, DeviceName, DeviceId, TimeGenerated, LogonType, AccountDomain, AccountName, AccountSid, AlertTime, AlertId, RemoteIP, RemoteDeviceName\n| extend AccountFullName = tostring(strcat(AccountDomain, \"\\\\\", AccountName))\n| extend HostName = iff(DeviceName has \u0027.\u0027, substring(DeviceName, 0, indexof(DeviceName, \u0027.\u0027)), DeviceName)\n| extend DnsDomain = iff(DeviceName has \u0027.\u0027, substring(DeviceName, indexof(DeviceName, \u0027.\u0027) + 1), \"\")\n",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P1D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Execution",
+                    "Persistence",
+                    "DefenseEvasion",
+                    "Impact"
+                ],
+    "Techniques":  [
+                       "T1059",
+                       "T1078",
+                       "T1070",
+                       "T1490"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "4bd9ce9d-8586-4beb-8fdb-bd018cacbe7d",
+    "TemplateVersion":  "1.0.1",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Host",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "DeviceName"
+                                                     },
+                                                     {
+                                                         "identifier":  "HostName",
+                                                         "columnName":  "HostName"
+                                                     },
+                                                     {
+                                                         "identifier":  "DnsDomain",
+                                                         "columnName":  "DnsDomain"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "AccountFullName"
+                                                     },
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "AccountName"
+                                                     },
+                                                     {
+                                                         "identifier":  "DnsDomain",
+                                                         "columnName":  "AccountDomain"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "IP",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Address",
+                                                         "columnName":  "RemoteIP"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:22",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:22",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

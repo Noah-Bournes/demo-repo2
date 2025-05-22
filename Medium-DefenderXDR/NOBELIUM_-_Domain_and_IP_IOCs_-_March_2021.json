@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "856d8348-59b5-4ddc-a2c7-0d3515f9803d\u0027)]",
+    "DisplayName":  "NOBELIUM - Domain and IP IOCs - March 2021",
+    "Description":  "Identifies a match across various data feeds for domains and IP IOCs related to NOBELIUM.\n References: https://www.microsoft.com/security/blog/2021/03/04/goldmax-goldfinder-sibot-analyzing-nobelium-malware/",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "let DomainNames = dynamic([\u0027onetechcompany.com\u0027, \u0027reyweb.com\u0027, \u0027srfnetwork.org\u0027, \u0027sense4baby.fr\u0027, \u0027nikeoutletinc.org\u0027, \u0027megatoolkit.com\u0027]);\nlet IPList = dynamic([\u0027185.225.69.69\u0027]);\nlet IPRegex = \u0027[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\u0027;\n(union isfuzzy=true\n(CommonSecurityLog\n| where SourceIP in (IPList) or DestinationIP in (IPList) or DestinationHostName in~ (DomainNames) or RequestURL has_any (DomainNames) or Message has_any (IPList)\n| parse Message with * \u0027(\u0027 DNSName \u0027)\u0027 * \n| extend MessageIP = extract(IPRegex, 0, Message)\n| extend IPMatch = case(SourceIP in (IPList), \"SourceIP\", DestinationIP in (IPList), \"DestinationIP\", MessageIP in (IPList), \"Message\", RequestURL in (DomainNames), \"RequestUrl\", \"NoMatch\") \n| extend timestamp = TimeGenerated, IPCustomEntity = case(IPMatch == \"SourceIP\", SourceIP, IPMatch == \"DestinationIP\", DestinationIP, IPMatch == \"Message\", MessageIP, \"NoMatch\"), AccountCustomEntity = SourceUserID\n),\n(_Im_Dns (domain_has_any=DomainNames)\n| extend DestinationIPAddress = DnsResponseName, DNSName = DnsQuery, Host = Dvc\n| extend timestamp = TimeGenerated, IPCustomEntity = DestinationIPAddress, HostCustomEntity = Host\n),\n(_Im_Dns (response_has_any_prefix=IPList)\n| extend DestinationIPAddress = DnsResponseName, DNSName = DnsQuery, Host = Dvc\n| extend timestamp = TimeGenerated, IPCustomEntity = DestinationIPAddress, HostCustomEntity = Host\n),\n(_Im_WebSession(url_has_any=DomainNames)\n| extend DestinationIPAddress = DstIpAddr, DNSName = tostring(parse_url(Url)[\"Host\"]), Host = Dvc\n| extend timestamp = TimeGenerated, IPCustomEntity = DestinationIPAddress, HostCustomEntity = Host\n),\n(VMConnection\n| where SourceIp in (IPList) or DestinationIp in (IPList) or RemoteDnsCanonicalNames has_any (DomainNames)\n| parse RemoteDnsCanonicalNames with * \u0027[\"\u0027 DNSName \u0027\"]\u0027 *\n| extend IPMatch = case( SourceIp in (IPList), \"SourceIP\", DestinationIp in (IPList), \"DestinationIP\", \"None\") \n| extend timestamp = TimeGenerated, IPCustomEntity = case(IPMatch == \"SourceIP\", SourceIp, IPMatch == \"DestinationIP\", DestinationIp, \"NoMatch\"), HostCustomEntity = Computer\n),\n(OfficeActivity\n| where ClientIP in (IPList)\n| extend timestamp = TimeGenerated, IPCustomEntity = ClientIP, AccountCustomEntity = UserId\n),\n(DeviceNetworkEvents\n| where RemoteUrl has_any (DomainNames) or RemoteIP in (IPList)\n| extend timestamp = TimeGenerated, DNSName = RemoteUrl, IPCustomEntity = RemoteIP, HostCustomEntity = DeviceName\n),\n(AzureDiagnostics \n| where ResourceType == \"AZUREFIREWALLS\"\n| where Category == \"AzureFirewallApplicationRule\"\n| parse msg_s with Protocol \u0027request from \u0027 SourceHost \u0027:\u0027 SourcePort \u0027to \u0027 DestinationHost \u0027:\u0027 DestinationPort \u0027. Action:\u0027 Action\n| where isnotempty(DestinationHost)\n| where DestinationHost has_any (DomainNames)  \n| extend timestamp = TimeGenerated, DNSName = DestinationHost, IPCustomEntity = SourceHost\n),\n(AZFWApplicationRule\n| where isnotempty(Fqdn)\n| where Fqdn has_any (DomainNames)\n| extend timestamp = TimeGenerated\n| extend DNSName = Fqdn\n| extend IPCustomEntity = SourceIp\n),\n(AZFWDnsQuery\n| where isnotempty(QueryName)\n| where QueryName has_any (DomainNames)\n| extend timestamp = TimeGenerated\n| extend DNSName = QueryName\n| extend IPCustomEntity = SourceIp\n)\n)",
+    "QueryFrequency":  "PT6H",
+    "QueryPeriod":  "PT6H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "bb8a3481-dd14-4e76-8dcc-bbec8776d695",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (1).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:20",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:20",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

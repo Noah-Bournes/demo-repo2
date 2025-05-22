@@ -1,0 +1,109 @@
+﻿{
+    "RuleId":  "517c35fe-9bca-4bc3-a897-6067a7b2adf1\u0027)]",
+    "DisplayName":  "Files Copied to USB Drives",
+    "Description":  "This query lists files copied to USB external drives with USB drive information based on FileCreated events associated with most recent USBDriveMount events befor file creations. But be aware that Advanced Hunting is not monitoring all the file types.",
+    "Severity":  "High",
+    "Enabled":  true,
+    "Query":  "let UsbDriveMount = DeviceEvents\n| where ActionType==\"UsbDriveMounted\"\n| extend ParsedFields=parse_json(AdditionalFields)\n| project DeviceId, DeviceName, DriveLetter=ParsedFields.DriveLetter, MountTime=TimeGenerated,\nProductName=ParsedFields.ProductName,SerialNumber=ParsedFields.SerialNumber,Manufacturer=ParsedFields.Manufacturer\n| order by DeviceId asc, MountTime desc;\nlet FileCreation = DeviceFileEvents\n| where InitiatingProcessAccountName != \"system\"\n| where ActionType == \"FileCreated\"\n| where FolderPath !startswith \"C:\\\\\"\n| where FolderPath !startswith \"\\\\\"\n| project ReportId,DeviceId,InitiatingProcessAccountDomain,\nInitiatingProcessAccountName,InitiatingProcessAccountUpn,\nFileName, FolderPath, SHA256, TimeGenerated, SensitivityLabel, IsAzureInfoProtectionApplied\n| order by DeviceId asc, TimeGenerated desc;\nFileCreation | lookup kind=inner (UsbDriveMount) on DeviceId\n| where FolderPath startswith DriveLetter\n| where TimeGenerated \u003e= MountTime\n| partition hint.strategy=native by ReportId ( top 1 by MountTime )\n| order by DeviceId asc, TimeGenerated desc\n| extend HostName = iff(DeviceName has \u0027.\u0027, substring(DeviceName, 0, indexof(DeviceName, \u0027.\u0027)), DeviceName)\n| extend DnsDomain = iff(DeviceName has \u0027.\u0027, substring(DeviceName, indexof(DeviceName, \u0027.\u0027) + 1), \"\")\n| extend FileHashAlgorithm = \u0027SHA256\u0027\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Exfiltration"
+                ],
+    "Techniques":  [
+                       "T1041"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "3ab04acf-e0e7-4f7c-8995-748ab4c848c2",
+    "TemplateVersion":  "1.0.0",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Host",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "DeviceName"
+                                                     },
+                                                     {
+                                                         "identifier":  "HostName",
+                                                         "columnName":  "HostName"
+                                                     },
+                                                     {
+                                                         "identifier":  "DnsDomain",
+                                                         "columnName":  "DnsDomain"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "File",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "FileName"
+                                                     },
+                                                     {
+                                                         "identifier":  "Directory",
+                                                         "columnName":  "FolderPath"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "FileHash",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Algorithm",
+                                                         "columnName":  "FileHashAlgorithm"
+                                                     },
+                                                     {
+                                                         "identifier":  "Value",
+                                                         "columnName":  "SHA256"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (14).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:23",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:23",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

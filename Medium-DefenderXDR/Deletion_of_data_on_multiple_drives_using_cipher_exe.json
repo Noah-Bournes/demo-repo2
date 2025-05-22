@@ -1,0 +1,83 @@
+﻿{
+    "RuleId":  "07f973e4-4624-4a65-b506-8c914d273c10\u0027)]",
+    "DisplayName":  "Deletion of data on multiple drives using cipher exe",
+    "Description":  "This query checks for attempts to delete data on multiple drives using cipher.exe. This activity is typically done by ransomware to prevent recovery of data after encryption.",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "// Look for cipher.exe deleting data from multiple drives\nDeviceProcessEvents\n| where FileName =~ \"cipher.exe\" \n// cipher.exe /w flag used for deleting data \n| where ProcessCommandLine has \"/w\" \n| summarize CipherCount = dcount(ProcessCommandLine), CipherList = make_set(ProcessCommandLine, 1000) by DeviceId, DeviceName, bin(TimeGenerated, 1m) \n// cipher.exe accessing multiple drives in a short timeframe  \n| where CipherCount \u003e 1\n| extend HostName = iff(DeviceName has \u0027.\u0027, substring(DeviceName, 0, indexof(DeviceName, \u0027.\u0027)), DeviceName)\n| extend DnsDomain = iff(DeviceName has \u0027.\u0027, substring(DeviceName, indexof(DeviceName, \u0027.\u0027) + 1), \"\")\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Impact"
+                ],
+    "Techniques":  [
+                       "T1485"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "03caa992-477f-4b19-8e2a-8cd58f8f9652",
+    "TemplateVersion":  "1.0.0",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Host",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "DeviceName"
+                                                     },
+                                                     {
+                                                         "identifier":  "HostName",
+                                                         "columnName":  "HostName"
+                                                     },
+                                                     {
+                                                         "identifier":  "DnsDomain",
+                                                         "columnName":  "DnsDomain"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:21",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:21",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

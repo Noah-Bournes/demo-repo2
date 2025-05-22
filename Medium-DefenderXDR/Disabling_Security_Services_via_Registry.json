@@ -1,0 +1,113 @@
+﻿{
+    "RuleId":  "9c84a843-6c5f-46dc-b21a-b99fad6c4d61\u0027)]",
+    "DisplayName":  "Disabling Security Services via Registry",
+    "Description":  "This query checks for processes modifying the registry to disable security features. This is a common technique used by threat actors for defence evasion.",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "DeviceProcessEvents\n| where InitiatingProcessCommandLine has_all(@\u0027\"reg\"\u0027, \u0027add\u0027, @\u0027\"HKLM\\SOFTWARE\\Policies\\\u0027, \u0027/v\u0027,\u0027/t\u0027, \u0027REG_DWORD\u0027, \u0027/d\u0027, \u0027/f\u0027)\n  and InitiatingProcessCommandLine has_any(\u0027DisableRealtimeMonitoring\u0027, \u0027UseTPMKey\u0027, \u0027UseTPMKeyPIN\u0027, \u0027UseAdvancedStartup\u0027, \n  \u0027EnableBDEWithNoTPM\u0027, \u0027RecoveryKeyMessageSource\u0027)\n| extend HostName = iff(DeviceName has \u0027.\u0027, substring(DeviceName, 0, indexof(DeviceName, \u0027.\u0027)), DeviceName)\n| extend DnsDomain = iff(DeviceName has \u0027.\u0027, substring(DeviceName, indexof(DeviceName, \u0027.\u0027) + 1), \"\")\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "DefenseEvasion"
+                ],
+    "Techniques":  [
+                       "T1562"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "32b29155-3fd3-4a9e-a0ca-a67e2593b60b",
+    "TemplateVersion":  "1.0.0",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Host",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "DeviceName"
+                                                     },
+                                                     {
+                                                         "identifier":  "HostName",
+                                                         "columnName":  "HostName"
+                                                     },
+                                                     {
+                                                         "identifier":  "DnsDomain",
+                                                         "columnName":  "DnsDomain"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "AccountUpn"
+                                                     },
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "AccountName"
+                                                     },
+                                                     {
+                                                         "identifier":  "NTDomain",
+                                                         "columnName":  "AccountDomain"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Process",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "ProcessId",
+                                                         "columnName":  "ProcessId"
+                                                     },
+                                                     {
+                                                         "identifier":  "CommandLine",
+                                                         "columnName":  "ProcessCommandLine"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:22",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:22",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

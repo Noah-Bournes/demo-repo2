@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "602f0277-205d-45a4-b53e-3c5ecdbf7e6b\u0027)]",
+    "DisplayName":  "Guest accounts added in AAD Groups other than the ones specified",
+    "Description":  "Guest Accounts are added in the Organization Tenants to perform various tasks i.e projects execution, support etc.. This detection notifies when guest users are added to Azure AD Groups other than the ones specified and poses a risk to gain access to sensitive apps or data.",
+    "Severity":  "High",
+    "Enabled":  true,
+    "Query":  "// OBJECT ID of AAD Groups can be found by navigating to Azure Active Directory then from menu on the left, select Groups and from the list shown of AAD Groups, the Second Column shows the ObjectID of each\nlet GroupIDs = dynamic([\"List with Custom AAD GROUP OBJECT ID 1\",\"Custom AAD GROUP OBJECT ID 2\"]);\nAuditLogs\n| where OperationName in (\u0027Add member to group\u0027, \u0027Add owner to group\u0027)\n| extend InitiatedByActionUserInformation = iff(isnotempty(InitiatedBy.user.userPrincipalName), InitiatedBy.user.userPrincipalName, InitiatedBy.app.displayName)\n| extend InitiatedByIPAdress = InitiatedBy.user.ipAddress \n// Uncomment the following line to filter events where the inviting user was a guest user\n//| where InitiatedBy has_any (\"CUSTOM DOMAIN NAME#\", \"#EXT#\")\n| mv-apply TargetResource = TargetResources on \n  (\n      where TargetResource.type =~ \"User\"\n      | extend InvitedUser = trim(@\u0027\"\u0027,tostring(TargetResource.userPrincipalName)),\n               Properties = TargetResource.modifiedProperties\n  )\n| mv-apply Property = Properties on \n  (\n      where Property.displayName =~ \"Group.DisplayName\"\n      | extend AADGroup = trim(\u0027\"\u0027,tostring(Property.newValue))\n  )\n| where InvitedUser has_any (\"CUSTOM DOMAIN NAME#\", \"#EXT#\")\n| mv-apply Property = Properties on\n   (\n     where Property.displayName =~ \"Group.ObjectID\"\n     | extend AADGroupId = trim(\u0027\"\u0027,tostring(Property.newValue))\n   )\n| where AADGroupId !in (GroupIDs)\n| extend Name = tostring(split(InitiatedByActionUserInformation,\u0027@\u0027,0)[0]), UPNSuffix = tostring(split(InitiatedByActionUserInformation,\u0027@\u0027,1)[0])",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P1D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "6ab1f7b2-61b8-442f-bc81-96afe7ad8c53",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (13).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:23",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:23",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

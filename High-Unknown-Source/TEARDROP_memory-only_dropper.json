@@ -1,0 +1,117 @@
+﻿{
+    "RuleId":  "06b25bf8-0257-44ed-99c1-ca889f57727a\u0027)]",
+    "DisplayName":  "TEARDROP memory-only dropper",
+    "Description":  "Identifies SolarWinds TEARDROP memory-only dropper IOCs in Window\u0027s defender Exploit Guard activity\nReferences:\n- https://www.fireeye.com/blog/threat-research/2020/12/evasive-attacker-leverages-solarwinds-supply-chain-compromises-with-sunburst-backdoor.html\n- https://gist.github.com/olafhartong/71ffdd4cab4b6acd5cbcd1a0691ff82f",
+    "Severity":  "High",
+    "Enabled":  true,
+    "Query":  "DeviceEvents\n| where ActionType has \"ExploitGuardNonMicrosoftSignedBlocked\"\n| where InitiatingProcessFileName has \"svchost.exe\" and FileName has \"NetSetupSvc.dll\"\n| extend HashAlgorithm = \"SHA1\"\n| extend HostName = tostring(split(DeviceName, \".\")[0]), DomainIndex = toint(indexof(DeviceName, \u0027.\u0027))\n| extend HostNameDomain = iff(DomainIndex != -1, substring(DeviceName, DomainIndex + 1), DeviceName)\n",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P1D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Execution",
+                    "Persistence",
+                    "DefenseEvasion"
+                ],
+    "Techniques":  [
+                       "T1543",
+                       "T1059",
+                       "T1027"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "738702fd-0a66-42c7-8586-e30f0583f8fe",
+    "TemplateVersion":  "1.0.6",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Host",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "DeviceName"
+                                                     },
+                                                     {
+                                                         "identifier":  "HostName",
+                                                         "columnName":  "HostName"
+                                                     },
+                                                     {
+                                                         "identifier":  "DnsDomain",
+                                                         "columnName":  "HostNameDomain"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "InitiatingProcessAccountUpn"
+                                                     },
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "InitiatingProcessAccountName"
+                                                     },
+                                                     {
+                                                         "identifier":  "UPNSuffix",
+                                                         "columnName":  "InitiatingProcessAccountDomain"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "FileHash",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Algorithm",
+                                                         "columnName":  "HashAlgorithm"
+                                                     },
+                                                     {
+                                                         "identifier":  "Value",
+                                                         "columnName":  "InitiatingProcessSHA1"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:22",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:22",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

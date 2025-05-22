@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "c4aef307-5172-433e-8387-1486f1264f50\u0027)]",
+    "DisplayName":  "Cross-tenant Access Settings Organization Added",
+    "Description":  "Organizations are added in the Cross-tenant Access Settings to control communication inbound or outbound for users and applications. This detection notifies when an Organization is added other than the list that is supposed to exist from the Azure AD Cross-tenant Access Settings.",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "// Tenants IDs can be found by navigating to Azure Active Directory then from menu on the left, select External Identities, then from menu on the left, select Cross-tenant access settings and from the list shown of Tenants\nlet ExpectedTenantIDs = dynamic([\"List of expected tenant IDs\",\"Tenant ID 2\"]);\nAuditLogs\n| where OperationName has \"Add a partner to cross-tenant access setting\"\n| extend InitiatedByActionUserInformation = iff(isnotempty(InitiatedBy.user.userPrincipalName), InitiatedBy.user.userPrincipalName, InitiatedBy.app.displayName)\n| extend InitiatedByIPAdress = InitiatedBy.user.ipAddress\n| mv-apply TargetResource = TargetResources on\n  (\n      where TargetResource.type =~ \"Policy\"\n      | extend Properties = TargetResource.modifiedProperties\n  )\n| mv-apply Property = Properties on\n  (\n      where Property.displayName =~ \"tenantId\"\n      | extend ExtTenantIDAdded = trim(\u0027\"\u0027,tostring(Property.newValue))\n  )\n| where ExtTenantIDAdded !in (ExpectedTenantIDs)\n| extend Name = tostring(split(InitiatedByActionUserInformation,\u0027@\u0027,0)[0]), UPNSuffix = tostring(split(InitiatedByActionUserInformation,\u0027@\u0027,1)[0])",
+    "QueryFrequency":  "P2D",
+    "QueryPeriod":  "P2D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "757e6a79-6d23-4ae6-9845-4dac170656b5",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (13).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:22",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:22",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

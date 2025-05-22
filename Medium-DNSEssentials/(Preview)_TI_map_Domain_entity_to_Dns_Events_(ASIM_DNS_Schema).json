@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "8a02f95f-e87a-491c-b198-0d37949188fb\u0027)]",
+    "DisplayName":  "(Preview) TI map Domain entity to Dns Events (ASIM DNS Schema)",
+    "Description":  "Identifies a match in DNS events from any Domain IOC from TI\nThis analytic rule uses [ASIM](https://aka.ms/AboutASIM) and supports any built-in or custom source that supports the ASIM DNS schema",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "let HAS_ANY_MAX = 10000;\nlet dt_lookBack = 1h;\nlet ioc_lookBack = 14d;\nlet DomainTIs= ThreatIntelligenceIndicator\n  | where TimeGenerated \u003e= ago(ioc_lookBack) and ExpirationDateTime \u003e now()\n  // Picking up only IOC\u0027s that contain the entities we want\n  | where isnotempty(DomainName)\n  | where Active == true\n  | summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by IndicatorId;\nlet Domains = DomainTIs | where isnotempty(DomainName) |summarize NDomains=dcount(DomainName), DomainsList=make_set(DomainName) \n  | project DomainList = iff(NDomains \u003e HAS_ANY_MAX, dynamic([]), DomainsList) ;\nDomainTIs\n  | join (\n      _Im_Dns(starttime=ago(dt_lookBack), domain_has_any=toscalar(Domains))\n      | extend DNS_TimeGenerated = TimeGenerated\n) on $left.DomainName==$right.DnsQuery\n| where DNS_TimeGenerated \u003c ExpirationDateTime\n| project LatestIndicatorTime, Description, ActivityGroupNames, IndicatorId, ThreatType, ExpirationDateTime, ConfidenceScore, Url, DNS_TimeGenerated, Dvc, SrcIpAddr, DnsQuery, DnsQueryType\n| extend timestamp = DNS_TimeGenerated, HostCustomEntity = Dvc, IPCustomEntity = SrcIpAddr, URLCustomEntity = Url",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "P14D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "999e9f5d-db4a-4b07-a206-29c4e667b7e8",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (13).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:23",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:23",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

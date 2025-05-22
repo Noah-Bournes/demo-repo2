@@ -1,0 +1,83 @@
+﻿{
+    "RuleId":  "d6ca41f2-9572-43d2-a783-42f6585fe3f9\u0027)]",
+    "DisplayName":  "C2-NamedPipe",
+    "Description":  "Detects the creation of a named pipe used by known APT malware.\nReference - https://docs.microsoft.com/openspecs/windows_protocols/ms-wpo/4de75e21-36fd-440a-859b-75accc74487c",
+    "Severity":  "High",
+    "Enabled":  true,
+    "Query":  "// this is what should be constantly tweaked with default C2 framework names, search uses has_any (wildcard)\nlet badPipeNames = pack_array(\n    \u0027\\\\psexec\u0027,                                     // PSexec default pipe\n    \u0027\\\\paexec\u0027,                                     // PSexec default pipe\n    \u0027\\\\remcom\u0027,                                     // PSexec default pipe\n    \u0027\\\\csexec\u0027,                                     // PSexec default pipe\n    \u0027\\\\isapi_http\u0027,                                 // Uroburos Malware Named Pipe\n    \u0027\\\\isapi_dg\u0027,                                   // Uroburos Malware Named Pipe\n    \u0027\\\\isapi_dg2\u0027,                                  // Uroburos Malware Named Pipe\n    \u0027\\\\sdlrpc\u0027,                                     // Cobra Trojan Named Pipe http://goo.gl/8rOZUX\n    \u0027\\\\ahexec\u0027,                                     // Sofacy group malware\n    \u0027\\\\winsession\u0027,                                 // Wild Neutron APT malware https://goo.gl/pivRZJ\n    \u0027\\\\lsassw\u0027,                                     // Wild Neutron APT malware https://goo.gl/pivRZJ\n    \u0027\\\\46a676ab7f179e511e30dd2dc41bd388\u0027,           // Project Sauron https://goo.gl/eFoP4A\n    \u0027\\\\9f81f59bc58452127884ce513865ed20\u0027,           // Project Sauron https://goo.gl/eFoP4A\n    \u0027\\\\e710f28d59aa529d6792ca6ff0ca1b34\u0027,           // Project Sauron https://goo.gl/eFoP4A\n    \u0027\\\\rpchlp_3\u0027,                                   // Project Sauron https://goo.gl/eFoP4A - Technical Analysis Input\n    \u0027\\\\NamePipe_MoreWindows\u0027,                       // US-CERT Alert - RedLeaves https://www.us-cert.gov/ncas/alerts/TA17-117A\n    \u0027\\\\pcheap_reuse\u0027,                               // Pipe used by Equation Group malware 77486bb828dba77099785feda0ca1d4f33ad0d39b672190079c508b3feb21fb0\n    \u0027\\\\gruntsvc\u0027,                                   // Covenant default named pipe\n    \u0027\\\\583da945-62af-10e8-4902-a8f205c72b2e\u0027,       // SolarWinds SUNBURST malware report https://www.fireeye.com/blog/threat-research/2020/12/evasive-attacker-leverages-solarwinds-supply-chain-compromises-with-sunburst-backdoor.html\n    \u0027\\\\bizkaz\u0027,                                     // Snatch Ransomware https://thedfirreport.com/2020/06/21/snatch-ransomware/\n    \u0027\\\\atctl\u0027,                                      // https://www.virustotal.com/#/file/a4ddb2664a6c87a1d3c5da5a5a32a5df9a0b0c8f2e951811bd1ec1d44d42ccf1/detection\n    \u0027\\\\userpipe\u0027,                                   // ruag apt case\n    \u0027\\\\iehelper\u0027,                                   // ruag apt case\n    \u0027\\\\sdlrpc\u0027,                                     // project cobra https://www.gdatasoftware.com/blog/2015/01/23926-analysis-of-project-cobra\n    \u0027\\\\comnap\u0027,                                     // https://www.gdatasoftware.com/blog/2015/01/23926-analysis-of-project-cobra\n    \u0027\\\\lsadump\u0027,                                    // Cred Dump-Tools Named Pipes\n    \u0027\\\\cachedump\u0027,                                  // Cred Dump-Tools Named Pipes\n    \u0027\\\\wceservicepipe\u0027,                             // Cred Dump-Tools Named Pipes\n    \u0027\\\\jaccdpqnvbrrxlaf\u0027,                           // PoshC2 default named pipe\n    \u0027\\\\svcctl\u0027,                                     // CrackMapExec default named pipe\n    \u0027\\\\csexecsvc\u0027                                   // CSEXEC default named pipe\n    \u0027\\\\status_\u0027,                                    // CS default named pipes https://github.com/Neo23x0/sigma/issues/253\n    \u0027\\\\MSSE-\u0027,                                      // CobaltStrike default named pipe\n    \u0027\\\\status_\u0027,                                    // CobaltStrike default named pipe\n    \u0027\\\\msagent_\u0027,                                   // (target) CobaltStrike default named pipe\n    \u0027\\\\postex_ssh_\u0027,                                // CobaltStrike default named pipe\n    \u0027\\\\postex_\u0027,                                    // CobaltStrike default named pipe\n    \u0027\\\\Posh\u0027                                        // PoshC2 default named pipe\n);\nDeviceEvents\n| where ActionType == \"NamedPipeEvent\"\n| extend ParsedFields=parse_json(AdditionalFields)\n| where ParsedFields.FileOperation == \"File created\"\n| where ParsedFields.PipeName has_any (badPipeNames)\n| project TimeGenerated, ActionType, DeviceName, InitiatingProcessAccountDomain, InitiatingProcessAccountName, InitiatingProcessFolderPath, InitiatingProcessCommandLine, ParsedFields.FileOperation, ParsedFields.PipeName\n| extend HostName = iff(DeviceName has \u0027.\u0027, substring(DeviceName, 0, indexof(DeviceName, \u0027.\u0027)), DeviceName)\n| extend DnsDomain = iff(DeviceName has \u0027.\u0027, substring(DeviceName, indexof(DeviceName, \u0027.\u0027) + 1), \"\")\n",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P1D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "CommandAndControl"
+                ],
+    "Techniques":  [
+                       "T1105"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "7ce00cba-f76f-4026-ab7f-7e4f1b67bd18",
+    "TemplateVersion":  "1.0.0",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Host",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "DeviceName"
+                                                     },
+                                                     {
+                                                         "identifier":  "HostName",
+                                                         "columnName":  "HostName"
+                                                     },
+                                                     {
+                                                         "identifier":  "DnsDomain",
+                                                         "columnName":  "DnsDomain"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:22",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:22",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

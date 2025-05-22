@@ -1,0 +1,92 @@
+﻿{
+    "RuleId":  "e48fde29-f040-46bd-b79e-cfff1510b00a\u0027)]",
+    "DisplayName":  "Successful API executed from a Tor exit node",
+    "Description":  "A successful API execution was detected from an IP address categorized as a TOR exit node by Threat Intelligence.",
+    "Severity":  "High",
+    "Enabled":  true,
+    "Query":  "let TorNodes = (\nexternaldata (TorIP:string)\n[h@\u0027https://firewalliplists.gypthecat.com/lists/kusto/kusto-tor-exit.csv.zip\u0027]\nwith (ignoreFirstRecord=true));\nAWSCloudTrail\n| where SourceIpAddress in (TorNodes) and isempty(ErrorCode) and isempty(ErrorMessage)\n| extend UserIdentityArn = iif(isempty(UserIdentityArn), tostring(parse_json(Resources)[0].ARN), UserIdentityArn)\n| extend UserName = tostring(split(UserIdentityArn, \u0027/\u0027)[-1])\n| extend AccountName = case( UserIdentityPrincipalid == \"Anonymous\", \"Anonymous\", isempty(UserIdentityUserName), UserName, UserIdentityUserName)\n| extend AccountName = iif(AccountName contains \"@\", tostring(split(AccountName, \u0027@\u0027, 0)[0]), AccountName),\n    AccountUPNSuffix = iif(AccountName contains \"@\", tostring(split(AccountName, \u0027@\u0027, 1)[0]), \"\")\n| extend timestamp = TimeGenerated\n",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P1D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Execution"
+                ],
+    "Techniques":  [
+                       "T1204"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "0adab960-5565-4978-ba6d-044553e4acc4",
+    "TemplateVersion":  "1.0.1",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "AccountName"
+                                                     },
+                                                     {
+                                                         "identifier":  "UPNSuffix",
+                                                         "columnName":  "AccountUPNSuffix"
+                                                     },
+                                                     {
+                                                         "identifier":  "CloudAppAccountId",
+                                                         "columnName":  "RecipientAccountId"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "IP",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Address",
+                                                         "columnName":  "SourceIpAddress"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:21",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:21",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

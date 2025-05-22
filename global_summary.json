@@ -1,0 +1,12 @@
+﻿{
+    "TenantName":  "Crisk",
+    "ProcessingDate":  "2025-05-22 17:25:31",
+    "TotalRules":  237,
+    "NewRules":  0,
+    "UpdatedRules":  4,
+    "UnchangedRules":  233,
+    "FilesProcessed":  5,
+    "OutputStructure":  "Severity-Source\\Rules",
+    "TenantTrackingFile":  "tenant_tracking_crisk.json",
+    "IsNewTenantTracking":  false
+}

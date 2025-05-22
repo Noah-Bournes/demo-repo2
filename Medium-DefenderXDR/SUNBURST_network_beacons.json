@@ -1,0 +1,135 @@
+﻿{
+    "RuleId":  "1bfe47ec-7ab2-4cbe-b664-ce18b25c5ab9\u0027)]",
+    "DisplayName":  "SUNBURST network beacons",
+    "Description":  "Identifies SolarWinds SUNBURST domain beacon IOCs in DeviceNetworkEvents\nReferences:\n- https://www.fireeye.com/blog/threat-research/2020/12/evasive-attacker-leverages-solarwinds-supply-chain-compromises-with-sunburst-backdoor.html\n- https://gist.github.com/olafhartong/71ffdd4cab4b6acd5cbcd1a0691ff82f",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "let SunburstURL=dynamic([\"panhardware.com\",\"databasegalore.com\",\"avsvmcloud.com\",\"freescanonline.com\",\"thedoccloud.com\",\"deftsecurity.com\"]);\nDeviceNetworkEvents\n| where ActionType == \"ConnectionSuccess\"\n| where RemoteUrl in(SunburstURL)\n| extend HashAlgorithm = \u0027MD5\u0027\n| extend HostName = tostring(split(DeviceName, \".\")[0]), DomainIndex = toint(indexof(DeviceName, \u0027.\u0027))\n| extend HostNameDomain = iff(DomainIndex != -1, substring(DeviceName, DomainIndex + 1), DeviceName)\n",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P1D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Execution",
+                    "Persistence",
+                    "InitialAccess"
+                ],
+    "Techniques":  [
+                       "T1195",
+                       "T1059",
+                       "T1546"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "ce1e7025-866c-41f3-9b08-ec170e05e73e",
+    "TemplateVersion":  "1.0.5",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Host",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "DeviceName"
+                                                     },
+                                                     {
+                                                         "identifier":  "HostName",
+                                                         "columnName":  "HostName"
+                                                     },
+                                                     {
+                                                         "identifier":  "DnsDomain",
+                                                         "columnName":  "HostNameDomain"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "InitiatingProcessAccountUpn"
+                                                     },
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "InitiatingProcessAccountName"
+                                                     },
+                                                     {
+                                                         "identifier":  "UPNSuffix",
+                                                         "columnName":  "InitiatingProcessAccountDomain"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "IP",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Address",
+                                                         "columnName":  "RemoteIP"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "URL",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Url",
+                                                         "columnName":  "RemoteUrl"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "FileHash",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Algorithm",
+                                                         "columnName":  "HashAlgorithm"
+                                                     },
+                                                     {
+                                                         "identifier":  "Value",
+                                                         "columnName":  "InitiatingProcessMD5"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:22",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:22",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

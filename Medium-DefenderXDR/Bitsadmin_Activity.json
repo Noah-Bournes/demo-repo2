@@ -1,0 +1,100 @@
+﻿{
+    "RuleId":  "f58fc839-400b-40c9-814f-f52c92e583b5\u0027)]",
+    "DisplayName":  "Bitsadmin Activity",
+    "Description":  "Background Intelligent Transfer Service (BITS) is a way to reliably download files from webservers or SMB servers. \nThis service is commonly used for legitimate purposes, but can also be used as part of a malware downloader. \nAdditionally, bitsadmin can be used to upload files and therefore can be used for data exfiltration. This\nquery will identify use of bitsadmin.exe for either purpose and will identify directionality file transfer\ndirectionality.",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "DeviceProcessEvents\n| where \n    (FileName =~ \"bitsadmin.exe\" or column_ifexists(\u0027ProcessVersionInfoOriginalFileName\u0027,\u0027ColumnNotAvailable\u0027) =~ \u0027bitsadmin.exe\u0027)\n    and ProcessCommandLine has_any (\u0027/Transfer\u0027,\u0027/AddFile\u0027, \u0027/AddFileSet\u0027,\u0027/AddFileWithRanges\u0027)\n| extend \n    ParsedCommandLine = parse_command_line(ProcessCommandLine,\u0027windows\u0027)\n| extend     \n    RemoteUrl = tostring(ParsedCommandLine[-2]),\n    LocalFile= tostring(ParsedCommandLine[-1]),\n    Direction = iff(ProcessCommandLine has \"/Upload\", \u0027Upload\u0027, \u0027Download\u0027)\n| project-reorder \n    TimeGenerated,\n    DeviceId,\n    DeviceName,\n    Direction,\n    RemoteUrl,\n    LocalFile,\n    InitiatingProcessFolderPath,\n    InitiatingProcessAccountDomain,\n    InitiatingProcessAccountName,\n    InitiatingProcessSHA256,\n    ProcessId,\n    ProcessCommandLine\n| extend HostName = iff(DeviceName has \u0027.\u0027, substring(DeviceName, 0, indexof(DeviceName, \u0027.\u0027)), DeviceName)\n| extend DnsDomain = iff(DeviceName has \u0027.\u0027, substring(DeviceName, indexof(DeviceName, \u0027.\u0027) + 1), \"\")\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Persistence",
+                    "CommandAndControl",
+                    "Exfiltration"
+                ],
+    "Techniques":  [
+                       "T1197",
+                       "T1105",
+                       "T1048"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "2a1dc4c2-a8d6-4a0e-8539-9b971c851195",
+    "TemplateVersion":  "1.0.0",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Host",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "DeviceName"
+                                                     },
+                                                     {
+                                                         "identifier":  "HostName",
+                                                         "columnName":  "HostName"
+                                                     },
+                                                     {
+                                                         "identifier":  "DnsDomain",
+                                                         "columnName":  "DnsDomain"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Process",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "ProcessId",
+                                                         "columnName":  "ProcessId"
+                                                     },
+                                                     {
+                                                         "identifier":  "CommandLine",
+                                                         "columnName":  "ProcessCommandLine"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:21",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:21",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

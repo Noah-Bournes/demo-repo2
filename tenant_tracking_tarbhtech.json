@@ -1,0 +1,43 @@
+﻿{
+    "TenantName":  "TarbhTech",
+    "FirstProcessed":  "2025-05-22 16:17:47",
+    "ProcessingHistory":  [
+                              {
+                                  "ProcessingDate":  "2025-05-22 16:17:47",
+                                  "FilesProcessed":  1,
+                                  "FileList":  "TT-Sentinel",
+                                  "RulesProcessed":  0,
+                                  "NewRules":  0,
+                                  "UpdatedRules":  0,
+                                  "UnchangedRules":  0,
+                                  "ProcessedBy":  "NoahBournes"
+                              },
+                              {
+                                  "ProcessingDate":  "2025-05-22 16:18:32",
+                                  "FilesProcessed":  1,
+                                  "FileList":  "TT-Sentinel",
+                                  "RulesProcessed":  0,
+                                  "NewRules":  0,
+                                  "UpdatedRules":  0,
+                                  "UnchangedRules":  0,
+                                  "ProcessedBy":  "NoahBournes"
+                              },
+                              {
+                                  "ProcessingDate":  "2025-05-22 16:19:26",
+                                  "FilesProcessed":  5,
+                                  "FileList":  [
+                                                   "Azure_Sentinel_analytics_rules (1).json",
+                                                   "Azure_Sentinel_analytics_rules (12).json",
+                                                   "Azure_Sentinel_analytics_rules (13).json",
+                                                   "Azure_Sentinel_analytics_rules (14).json",
+                                                   "Azure_Sentinel_analytics_rules (2).json"
+                                               ],
+                                  "RulesProcessed":  237,
+                                  "NewRules":  234,
+                                  "UpdatedRules":  2,
+                                  "UnchangedRules":  1,
+                                  "ProcessedBy":  "NoahBournes"
+                              }
+                          ],
+    "TotalProcessingRuns":  3
+}

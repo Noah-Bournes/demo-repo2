@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "1e89d8ab-0e67-4fb9-b219-d7ce684400d1\u0027)]",
+    "DisplayName":  "Dynamics Encryption Settings Changed",
+    "Description":  "This query looks for changes to the Data Encryption settings for Dynamics 365.\nReference: https://docs.microsoft.com/microsoft-365/compliance/office-365-encryption-in-microsoft-dynamics-365",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "Dynamics365Activity\n| extend Message = tostring(split(OriginalObjectId, \u0027 \u0027)[0])\n| where Message =~ \u0027IsDataEncryptionActive\u0027\n| project-reorder TimeGenerated, Message, UserId, ClientIP, InstanceUrl, UserAgent\n| extend timestamp = TimeGenerated, AccountCustomEntity = UserId, IPCustomEntity = ClientIP",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "b185ac23-dc27-4573-8192-1134c7a95f4f",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (1).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:20",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:20",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

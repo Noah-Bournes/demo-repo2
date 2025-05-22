@@ -1,0 +1,75 @@
+﻿{
+    "RuleId":  "30044aad-7609-4e3d-8224-7a069a20135a\u0027)]",
+    "DisplayName":  "Remote Desktop Network Brute force (ASIM Network Session schema)",
+    "Description":  "This detection identifies RDP application network traffic and filters any source/destination pair generating more than 25 events hard threshold.",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "// Start of the query and  Filter events that resulted in failure\n_Im_NetworkSession(eventresult=\"Failure\")\n// Filter out private source IP addresses and focus on specific destination port (3389)\n// Also, ensure that the source and destination IP addresses are not the same\n| where not(ipv4_is_private(SrcIpAddr)) and tostring(DstPortNumber) has_any (\"3389\") and SrcIpAddr != DstIpAddr\n// Summarize the data by source and destination IP addresses, destination port number, network protocol, and event result\n// Also, bin the time generated in 5-minute intervals\n// Calculate the minimum and maximum time generated, the sum of event counts, and a set of up to 10 event vendors\n| summarize Starttime= min(TimeGenerated),EndTime= max(TimeGenerated),TargettedIPs=dcount(DstIpAddr),Eventscount=sum(EventCount),EventVendors=make_set(EventVendor,10) by SrcIpAddr,DstPortNumber,EventResult, bin(TimeGenerated, 5m)\n// Filter the summarized data to include only those with an event count of 25 or more\n| where Eventscount \u003e= 25\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "CredentialAccess"
+                ],
+    "Techniques":  [
+                       "T1110"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "b7dc801e-1e79-48bb-91e8-2229a8e6d40b",
+    "TemplateVersion":  "1.0.0",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "IP",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Address",
+                                                         "columnName":  "SrcIpAddr"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "AlertPerResult"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:21",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:21",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

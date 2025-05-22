@@ -1,0 +1,87 @@
+﻿{
+    "RuleId":  "d6594858-6561-4866-807b-b981e096f701\u0027)]",
+    "DisplayName":  "Qakbot Discovery Activies",
+    "Description":  "This query searches for injected processes launching discovery activity. Qakbot has been observed leading to ransomware in numerous instances. It looks for discovery commands such as net.exe, whoami.exe, nslookup.exe, netstat.exe, arp.exe, and ping.exe.",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "DeviceProcessEvents \n| where InitiatingProcessFileName in~(\u0027mobsync.exe\u0027,\u0027explorer.exe\u0027)\n| where (FileName =~ \u0027net.exe\u0027 and InitiatingProcessCommandLine has_all(\u0027view\u0027,\u0027/all\u0027))\n     or (FileName =~ \u0027whoami.exe\u0027 and InitiatingProcessCommandLine has \u0027/all\u0027)\n     or (FileName =~ \u0027nslookup.exe\u0027 and InitiatingProcessCommandLine has_all(\u0027querytype=ALL\u0027,\u0027timeout=10\u0027))\n     or (FileName =~ \u0027netstat.exe\u0027 and InitiatingProcessCommandLine has \u0027-nao\u0027)\n     or (FileName =~ \u0027arp.exe\u0027 and InitiatingProcessCommandLine has \u0027-a\u0027)\n     or (FileName =~ \u0027ping.exe\u0027 and InitiatingProcessCommandLine has \u0027-t\u0027 and InitiatingProcessCommandLine endswith \u0027127.0.0.1\u0027)\n| summarize DiscoveryCommands = dcount(InitiatingProcessCommandLine), make_set(InitiatingProcessFileName), make_set(FileName), make_set(InitiatingProcessCommandLine) by DeviceId, DeviceName, bin(TimeGenerated, 5m)   \n| where DiscoveryCommands \u003e= 3\n| extend HostName = iff(DeviceName has \u0027.\u0027, substring(DeviceName, 0, indexof(DeviceName, \u0027.\u0027)), DeviceName)\n| extend DnsDomain = iff(DeviceName has \u0027.\u0027, substring(DeviceName, indexof(DeviceName, \u0027.\u0027) + 1), \"\")\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "DefenseEvasion",
+                    "Discovery",
+                    "Execution"
+                ],
+    "Techniques":  [
+                       "T1140",
+                       "T1010",
+                       "T1059"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "ba9db6b2-3d05-42ae-8aee-3a15bbe29f27",
+    "TemplateVersion":  "1.0.0",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Host",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "DeviceName"
+                                                     },
+                                                     {
+                                                         "identifier":  "HostName",
+                                                         "columnName":  "HostName"
+                                                     },
+                                                     {
+                                                         "identifier":  "DnsDomain",
+                                                         "columnName":  "DnsDomain"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:21",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:21",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

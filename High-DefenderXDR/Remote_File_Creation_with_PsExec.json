@@ -1,0 +1,83 @@
+﻿{
+    "RuleId":  "ada2c1de-d7c5-4367-8915-edc5c545306c\u0027)]",
+    "DisplayName":  "Remote File Creation with PsExec",
+    "Description":  "This query was originally published in the threat analytics report, Ryuk ransomware. There is also a related blog.\nRyuk is human-operated ransomware. Much like DoppelPaymer ransomware, Ryuk is spread manually, often on networks that are already infected with Trickbot.\nRyuk operators use PsExec to manually spread the ransomware to other devices.\nThe following query detects remote file creation events that might indicate an active attack.\nThe See also section below lists links to other queries associated with Ryuk ransomware.\nReferences:\nhttps://www.microsoft.com/security/blog/2020/03/05/human-operated-ransomware-attacks-a-preventable-disaster/\nhttps://www.microsoft.com/en-us/wdsi/threats/malware-encyclopedia-description?Name=Ransom:Win32/Ryuk.AA\nhttps://www.microsoft.com/security/blog/2020/03/05/human-operated-ransomware-attacks-a-preventable-disaster/\nhttps://docs.microsoft.com/sysinternals/downloads/psexec",
+    "Severity":  "High",
+    "Enabled":  true,
+    "Query":  "// Find PsExec creating multiple files on remote machines in a 10-minute window\nDeviceFileEvents\n// Looking for PsExec by accepteula command flag\n| where InitiatingProcessCommandLine has \"accepteula\"\n// Remote machines and file is exe\n| where FolderPath has \"\\\\\\\\\" and FileName endswith \".exe\"\n| extend Exe = countof(InitiatingProcessCommandLine, \".exe\")\n// Checking to see if command line has 2 .exe or .bat\n| where InitiatingProcessCommandLine !has \".ps1\" and Exe \u003e 1 or\nInitiatingProcessCommandLine has \".bat\"\n// Exclusions: Remove the following line to widen scope of AHQ\n| where not(InitiatingProcessCommandLine has_any(\"batch\", \"auditpol\",\n\"script\", \"scripts\", \"illusive\", \"rebootrequired\"))\n| summarize FileCount = dcount(FolderPath), make_set(SHA1, 100000), make_set(FolderPath, 100000),\nmake_set(FileName, 100000), make_set(InitiatingProcessCommandLine, 100000) by DeviceId, DeviceName,\nTimeWindow=bin(TimeGenerated, 10m), InitiatingProcessFileName\n| where FileCount \u003e 4\n| extend HostName = iff(DeviceName has \u0027.\u0027, substring(DeviceName, 0, indexof(DeviceName, \u0027.\u0027)), DeviceName)\n| extend DnsDomain = iff(DeviceName has \u0027.\u0027, substring(DeviceName, indexof(DeviceName, \u0027.\u0027) + 1), \"\")\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "LateralMovement"
+                ],
+    "Techniques":  [
+                       "T1570"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "35ab0d58-baab-4154-87ed-fa2f69797e9e",
+    "TemplateVersion":  "1.0.0",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Host",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "DeviceName"
+                                                     },
+                                                     {
+                                                         "identifier":  "HostName",
+                                                         "columnName":  "HostName"
+                                                     },
+                                                     {
+                                                         "identifier":  "DnsDomain",
+                                                         "columnName":  "DnsDomain"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:22",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:22",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

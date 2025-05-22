@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "7cef8a2f-ac36-424b-9f75-8e322e7f0935\u0027)]",
+    "DisplayName":  "User Assigned Privileged Role",
+    "Description":  "Identifies when a new privileged role is assigned to a user.  Any account eligible for a role is now being given privileged access. If the assignment is unexpected or into a role that isn\u0027t the responsibility of the account holder, investigate.\nRef : https://docs.microsoft.com/azure/active-directory/fundamentals/security-operations-privileged-accounts#things-to-monitor-1",
+    "Severity":  "High",
+    "Enabled":  true,
+    "Query":  "let RoleKeywords = dynamic([\"Add eligible member to role\", \"Add member to role\"]);\nAuditLogs \n| where Category == \"RoleManagement\"\n| where AADOperationType in~ (\"Assign\", \"AssignEligibleRole\")\n| where ActivityDisplayName has_any (RoleKeywords)\n| mv-expand TargetResources\n| extend modifiedProps = parse_json(TargetResources.modifiedProperties)\n| mv-expand bagexpansion=array modifiedProps\n| evaluate bag_unpack(modifiedProps)\n| extend displayName = column_ifexists(\"displayName\", \"\"), \n         newValue = tostring(column_ifexists(\"newValue\", \"\"))\n| where displayName =~ \"Role.DisplayName\"\n| extend RoleName = trim(@\u0027\"\u0027, newValue)\n| where RoleName has \"Admin\"\n| extend InitApp = parse_json(InitiatedBy.app),\n         InitUser = parse_json(InitiatedBy.user)\n| extend AppDisplayName = tostring(InitApp.displayName),\n         InitiatedUserUPN = tostring(InitUser.userPrincipalName),\n         InitiatedUserIP = tostring(InitUser.ipAddress)\n| extend Initiator = iff(isnotempty(AppDisplayName), AppDisplayName, InitiatedUserUPN)\n| where Initiator != \"MS-PIM\"\n| extend Target = tostring(TargetResources.userPrincipalName)\n| summarize by bin(TimeGenerated, 1h), OperationName, RoleName, Target, Initiator, InitiatedUserIP\n| extend AccountCustomEntity = Target, \n         IPCustomEntity = InitiatedUserIP,\n         timestamp = TimeGenerated\n",
+    "QueryFrequency":  "PT2H",
+    "QueryPeriod":  "PT2H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Persistence"
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "050b9b3d-53d0-4364-a3da-1b678b8211ec",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:21",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:21",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

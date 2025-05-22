@@ -1,0 +1,90 @@
+﻿{
+    "RuleId":  "e135b3a8-d1db-4745-9c24-5547e304136c\u0027)]",
+    "DisplayName":  "Anomalous sign-in location by user account and authenticating application",
+    "Description":  "This query over Microsoft Entra ID sign-in considers all user sign-ins for each Microsoft Entra ID application and picks out the most anomalous change in location profile for a user within an individual application",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "// Adjust this figure to adjust how sensitive this detection is\nlet sensitivity = 2.5;\n// Adjust this figure to set the value that defines the requested estimation accuracy. The default value is 1. Possible values are 0, 1, 2, 3, 4.\nlet dcountAccuracy = 1;\nlet AuthEvents = materialize(\nunion isfuzzy=True SigninLogs, AADNonInteractiveUserSignInLogs\n| where TimeGenerated between (ago(7d) .. now())\n| where ResultType == 0\n| extend LocationDetails = LocationDetails_dynamic\n| extend Location = strcat(LocationDetails.countryOrRegion, \"-\", LocationDetails.state,\"-\", LocationDetails.city)\n| where Location != \"--\");\nAuthEvents\n| summarize dcount(Location, dcountAccuracy) by AppDisplayName, AppId, UserPrincipalName, UserId, bin(startofday(TimeGenerated), 1d)\n| where dcount_Location \u003e 2\n| make-series CountOfLocations = sum(dcount_Location) on TimeGenerated  step 1d by AppId, UserId\n| extend (Anomalies, Score, Baseline) = series_decompose_anomalies(CountOfLocations, sensitivity, -1, \u0027linefit\u0027)\n| mv-expand CountOfLocations to typeof(double), TimeGenerated to typeof(datetime), Anomalies to typeof(double), Score to typeof(double), Baseline to typeof(long)\n| where Anomalies \u003e 0 and Baseline \u003e 0\n| join kind=inner( AuthEvents | extend TimeStamp = startofday(TimeGenerated)) on UserId, AppId\n| extend SignInDetails = bag_pack(\"TimeGenerated\", TimeGenerated1, \"Location\", Location, \"Source\", IPAddress, \"Device\", DeviceDetail_dynamic)\n| summarize SignInDetailsSet=make_set(SignInDetails, 1000) by UserId, UserPrincipalName, CountOfLocations, TimeGenerated, AppId, AppDisplayName\n| extend Name = split(UserPrincipalName, \"@\")[0], UPNSuffix = split(UserPrincipalName, \"@\")[1]\n",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P7D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "InitialAccess"
+                ],
+    "Techniques":  [
+                       "T1078"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "7cb8f77d-c52f-4e46-b82f-3cf2e106224a",
+    "TemplateVersion":  "2.0.5",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "UserPrincipalName"
+                                                     },
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "Name"
+                                                     },
+                                                     {
+                                                         "identifier":  "UPNSuffix",
+                                                         "columnName":  "UPNSuffix"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "AadUserId",
+                                                         "columnName":  "UserId"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  {
+                          "Application":  "AppDisplayName"
+                      },
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:21",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:21",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

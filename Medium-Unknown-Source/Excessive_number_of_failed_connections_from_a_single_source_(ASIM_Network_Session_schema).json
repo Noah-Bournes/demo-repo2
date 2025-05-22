@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "08f08046-83db-4b90-a580-a2a41985170b\u0027)]",
+    "DisplayName":  "Excessive number of failed connections from a single source (ASIM Network Session schema)",
+    "Description":  "This rule identifies a single source that generates an excessive amount of failed connections. Modify the threshold to change the sensitivity of the rule: the higher the threshold, the less sensitive is the rule and less incidents will be generated.\u003cbr\u003e\u003cbr\u003e \n This analytic rule uses [ASIM](https://aka.ms/AboutASIM) and supports any built-in or custom source that supports the ASIM NetworkSession schema",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "let threshold = 5000;\n_Im_NetworkSession(eventresult=\u0027Failure\u0027)\n| summarize Count=count() by SrcIpAddr, bin(TimeGenerated,5m)\n| where Count \u003e threshold\n| extend timestamp = TimeGenerated, threshold\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Impact"
+                ],
+    "Techniques":  [
+                       "T1499"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "4902eddb-34f7-44a8-ac94-8486366e9494",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (1).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:19",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:19",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

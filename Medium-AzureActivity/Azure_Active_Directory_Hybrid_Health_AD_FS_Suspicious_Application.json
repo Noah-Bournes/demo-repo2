@@ -1,0 +1,62 @@
+﻿{
+    "RuleId":  "9d4dcdf5-a7e4-433e-b34b-6d3486b71793\u0027)]",
+    "DisplayName":  "Azure Active Directory Hybrid Health AD FS Suspicious Application",
+    "Description":  "This detection uses AzureActivity logs (Administrative category) to a suspicious application adding a server instance to an Azure AD Hybrid health AD FS service or deleting the AD FS service instance.\nUsually the Azure AD Connect Health Agent application with ID cf6d7e68-f018-4e0a-a7b3-126e053fb88d and ID cb1056e2-e479-49de-ae31-7812af012ed8 is used to perform those operations.",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "// Azure AD Connect Health Agent - cf6d7e68-f018-4e0a-a7b3-126e053fb88d\n// Azure Active Directory Connect - cb1056e2-e479-49de-ae31-7812af012ed8\nlet appList = dynamic([\u0027cf6d7e68-f018-4e0a-a7b3-126e053fb88d\u0027,\u0027cb1056e2-e479-49de-ae31-7812af012ed8\u0027]);\nlet operationNamesList = dynamic([\u0027Microsoft.ADHybridHealthService/services/servicemembers/action\u0027,\u0027Microsoft.ADHybridHealthService/services/delete\u0027]);\nAzureActivity\n| where CategoryValue == \u0027Administrative\u0027\n| where ResourceProviderValue =~ \u0027Microsoft.ADHybridHealthService\u0027\n| where _ResourceId contains \u0027AdFederationService\u0027\n| where OperationNameValue in~ (operationNamesList)\n| extend claimsJson = parse_json(Claims)\n| extend AppId = tostring(claimsJson.appid)\n| extend AccountName = tostring(claimsJson.name)\n| where AppId !in (appList)\n| project-away claimsJson\n| extend timestamp = TimeGenerated, AccountCustomEntity = Caller, IPCustomEntity = CallerIpAddress\n",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P1D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "CredentialAccess",
+                    "DefenseEvasion"
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "d9938c3b-16f9-444d-bc22-ea9a9110e0fd",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (14).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:24",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:24",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

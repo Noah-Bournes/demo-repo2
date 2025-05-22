@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "9cd319c0-458a-4e57-964e-07784c1f08bb\u0027)]",
+    "DisplayName":  "Failed AWS Console logons but success logon to AzureAD",
+    "Description":  "Identifies a list of IP addresses with a minimum numbe(default of 5) of failed logon attempts to AWS Console.\nUses that list to identify any successful Azure Active Directory logons from these IPs within the same timeframe.",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "//Adjust this threshold to fit environment\nlet  signin_threshold = 5;\n//Make a list of IPs with failed AWS console logins\nlet aws_fails = AWSCloudTrail\n| where EventName == \"ConsoleLogin\"\n| extend LoginResult = tostring(parse_json(ResponseElements).ConsoleLogin)\n| where LoginResult != \"Success\"\n| where SourceIpAddress != \"127.0.0.1\"\n| summarize count() by SourceIpAddress\n| where count_ \u003e  signin_threshold\n| summarize make_set(SourceIpAddress);\n//See if any of those IPs have sucessfully logged into Azure AD.\nSigninLogs\n| where ResultType in (\"0\", \"50125\", \"50140\")\n| where IPAddress in (aws_fails)\n| extend Reason = \"Multiple failed AWS Console logins from IP address\"\n| extend timestamp = TimeGenerated, AccountCustomEntity = UserPrincipalName, IPCustomEntity = IPAddress",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P1D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "910124df-913c-47e3-a7cd-29e1643fa55e",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (13).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:22",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:22",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

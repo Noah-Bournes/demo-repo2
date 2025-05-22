@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "a84efabc-b794-4880-ab0b-cb58b57f3f83\u0027)]",
+    "DisplayName":  "Windows Binaries Lolbins Renamed",
+    "Description":  "This query detects the execution of renamed Windows binaries (Lolbins). This is a common technique used by adversaries to evade detection. \nRef: https://docs.paloaltonetworks.com/cortex/cortex-xdr/cortex-xdr-analytics-alert-reference/cortex-xdr-analytics-alert-reference/execution-of-renamed-lolbin.html",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "let procList = externaldata(Process:string) [@\"https://raw.githubusercontent.com/Azure/Azure-Sentinel/master/Sample%20Data/Microsoft_Lolbas_Execution_Binaries.csv\"] with (format=\"csv\", ignoreFirstRecord=True);\nEvent\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID==1\n| parse EventData with * \u0027Image\"\u003e\u0027 Image \"\u003c\" * \u0027OriginalFileName\"\u003e\u0027 OriginalFileName \"\u003c\" *\n| where OriginalFileName has_any (procList) and not (Image has_any (procList))\n| parse EventData with * \u0027ProcessGuid\"\u003e\u0027 ProcessGuid \"\u003c\" * \u0027Description\"\u003e\u0027 Description \"\u003c\" * \u0027CommandLine\"\u003e\u0027 CommandLine \"\u003c\" * \u0027CurrentDirectory\"\u003e\u0027 CurrentDirectory \"\u003c\" * \u0027User\"\u003e\u0027 User \"\u003c\" * \u0027LogonGuid\"\u003e\u0027 LogonGuid \"\u003c\" * \u0027Hashes\"\u003e\u0027 Hashes \"\u003c\" * \u0027ParentProcessGuid\"\u003e\u0027 ParentProcessGuid \"\u003c\" * \u0027ParentImage\"\u003e\u0027 ParentImage \"\u003c\" * \u0027ParentCommandLine\"\u003e\u0027 ParentCommandLine \"\u003c\" * \u0027ParentUser\"\u003e\u0027 ParentUser \"\u003c\" *\n| summarize StartTime = min(TimeGenerated), EndTime = max(TimeGenerated) by EventID, Computer, User, ParentImage, ParentProcessGuid, ParentCommandLine, ParentUser, Image, ProcessGuid, CommandLine, Description, OriginalFileName, CurrentDirectory, Hashes\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Execution"
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "cbf6ad48-fa5c-4bf7-b205-28dbadb91255",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (2).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:25",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:25",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

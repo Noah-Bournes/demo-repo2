@@ -1,0 +1,83 @@
+﻿{
+    "RuleId":  "b6397241-ed65-4071-8e1e-6daf6e8d52be\u0027)]",
+    "DisplayName":  "DopplePaymer Procdump",
+    "Description":  "This query was originally published in the threat analytics report, Doppelpaymer: More human-operated ransomware. There is also a related blog.\nDoppelPaymer is ransomware that is spread manually by human operators. These operators have exhibited extensive knowledge of system administration and common network security misconfigurations. For example, they use SysInternal utilities such as ProcDump to dump credentials from LSASS. They often use these stolen credentials to turn off security software, run malicious commands, and spread malware throughout an organization.\nThe following query detects ProcDump being used to dump credentials from LSASS.\nThe See also section below lists links to other queries associated with DoppelPaymer.\nReferences:\nhttps://msrc-blog.microsoft.com/2019/11/20/customer-guidance-for-the-dopplepaymer-ransomware/\nhttps://www.microsoft.com/en-us/wdsi/threats/malware-encyclopedia-description?Name=Ransom:Win32/DoppelPaymer.KM!MTB\nhttps://docs.microsoft.com/sysinternals/downloads/procdump\nhttps://docs.microsoft.com/windows-server/security/credentials-protection-and-management/configuring-additional-lsa-protection",
+    "Severity":  "High",
+    "Enabled":  true,
+    "Query":  "// Dumping of LSASS memory using procdump\nDeviceProcessEvents\n// Command lines that include \"lsass\" and -accepteula or -ma flags used in procdump\n| where (ProcessCommandLine has \"lsass\" and (ProcessCommandLine has \"-accepteula\" or\nProcessCommandLine contains \"-ma\"))\n// Omits possible FPs where the full command is just \"procdump.exe lsass\"\nor (FileName in~ (\u0027procdump.exe\u0027,\u0027procdump64.exe\u0027) and ProcessCommandLine has \u0027lsass\u0027)\n| extend HostName = iff(DeviceName has \u0027.\u0027, substring(DeviceName, 0, indexof(DeviceName, \u0027.\u0027)), DeviceName)\n| extend DnsDomain = iff(DeviceName has \u0027.\u0027, substring(DeviceName, indexof(DeviceName, \u0027.\u0027) + 1), \"\")\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "CredentialAccess"
+                ],
+    "Techniques":  [
+                       "T1003"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "1be34fb9-f81b-47ae-84fb-465e6686d76c",
+    "TemplateVersion":  "1.0.0",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Host",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "DeviceName"
+                                                     },
+                                                     {
+                                                         "identifier":  "HostName",
+                                                         "columnName":  "HostName"
+                                                     },
+                                                     {
+                                                         "identifier":  "DnsDomain",
+                                                         "columnName":  "DnsDomain"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:22",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:22",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

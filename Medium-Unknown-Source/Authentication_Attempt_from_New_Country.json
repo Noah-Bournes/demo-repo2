@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "cef7feb0-b255-4123-a364-3ccc92e2475d\u0027)]",
+    "DisplayName":  "Authentication Attempt from New Country",
+    "Description":  "Detects when there is a log in attempt from a country that has not seen a successful login in the previous 14 days.\n  Threat actors may attempt to authenticate with credentials from compromised accounts - monitoring attempts from anomalous locations may help identify these attempts.\n  Authentication attempts should be investigated to ensure the activity was legitimate and if there is other similar activity.\n  Ref: https://docs.microsoft.com/azure/active-directory/fundamentals/security-operations-user-accounts#monitoring-for-failed-unusual-sign-ins",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "let known_locations =\n  union isfuzzy=True AADNonInteractiveUserSignInLogs, SigninLogs\n  | where TimeGenerated between(ago(14d)..ago(1d))\n  | where ResultType == 0\n  | summarize by Location;\n  union isfuzzy=True AADNonInteractiveUserSignInLogs, SigninLogs\n  | where TimeGenerated \u003e ago(1d)\n  | where ResultType != 50126\n  | where Location !in (known_locations)\n  | extend LocationDetails_dynamic = column_ifexists(\"LocationDetails_dynamic\", \"\")\n  | extend DeviceDetail_dynamic = column_ifexists(\"DeviceDetail_dynamic\", \"\")\n  | extend LocationDetails = iif(isnotempty(LocationDetails_dynamic), LocationDetails_dynamic, parse_json(LocationDetails_string))\n  | extend DeviceDetail = iif(isnotempty(DeviceDetail_dynamic), DeviceDetail_dynamic, parse_json(DeviceDetail_string))\n  | extend City = tostring(LocationDetails.city)\n  | extend State = tostring(LocationDetails.state)\n  | extend Place = strcat(City, \" - \", State)\n  | extend DeviceId = tostring(DeviceDetail.deviceId)\n  | extend Result = strcat(tostring(ResultType), \" - \", ResultDescription)\n  | summarize FirstSeen=min(TimeGenerated), LastSeen=max(TimeGenerated), make_set(Result), make_set(IPAddress), make_set(UserAgent), make_set(Place), make_set(DeviceId) by UserPrincipalName, Location, Category",
+    "QueryFrequency":  "P1D",
+    "QueryPeriod":  "P14D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "ef895ada-e8e8-4cf0-9313-b1ab67fab69f",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (1).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:20",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:20",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

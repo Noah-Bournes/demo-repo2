@@ -1,0 +1,118 @@
+﻿{
+    "RuleId":  "6f4948f9-31cf-43b3-af58-fab91e8e2223\u0027)]",
+    "DisplayName":  "Suspicious Powershell Commandlet Executed",
+    "Description":  "This analytic rule detects when a suspicious PowerShell commandlet is executed on a host. Threat actors often use PowerShell to execute commands and scripts to move laterally, escalate privileges, and exfiltrate data.",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "// Adjust the list of suspicious commandlets as needed\nlet SuspiciousPowerShellCommandList = dynamic([\"Get-ADUserResultantPasswordPolicy\",\n  \"Get-DomainPolicy\",\n  \"Get-DomainUser\",\n  \"Get-DomainComputer\",\n  \"Get-DomainController\",\n  \"Get-DomainGroup\",\n  \"Get-DomainTrust\",\n  \"Get-ADTrust\",\n  \"Get-ForestTrust\"\n  ]);\nDeviceEvents\n| where ActionType == \"PowerShellCommand\"\n| extend Commandlet = tostring(parse_json(AdditionalFields).Command)\n| where Commandlet has_any (SuspiciousPowerShellCommandList)\n| project TimeGenerated, DeviceName, LocalIP, InitiatingProcessAccountUpn, InitiatingProcessId, InitiatingProcessFileName, InitiatingProcessFolderPath, InitiatingProcessCommandLine\n| extend Username = tostring(split(InitiatingProcessAccountUpn, \u0027@\u0027)[0]), UPNSuffix = tostring(split(InitiatingProcessAccountUpn, \u0027@\u0027)[1])\n| extend DvcHostname = tostring(split(DeviceName, \u0027.\u0027)[0]), DvcDomain = tostring(strcat_array(array_slice(split(DeviceName, \u0027.\u0027), 1, -1), \u0027.\u0027))\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT1H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Execution"
+                ],
+    "Techniques":  [
+                       "T1059"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "b5153fb3-ada9-4ce4-9131-79c771efb50d",
+    "TemplateVersion":  "1.0.1",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Host",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "FullName",
+                                                         "columnName":  "DeviceName"
+                                                     },
+                                                     {
+                                                         "identifier":  "HostName",
+                                                         "columnName":  "DvcHostname"
+                                                     },
+                                                     {
+                                                         "identifier":  "DnsDomain",
+                                                         "columnName":  "DvcDomain"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "IP",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Address",
+                                                         "columnName":  "LocalIP"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "Username"
+                                                     },
+                                                     {
+                                                         "identifier":  "UPNSuffix",
+                                                         "columnName":  "UPNSuffix"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "Process",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "ProcessId",
+                                                         "columnName":  "InitiatingProcessId"
+                                                     },
+                                                     {
+                                                         "identifier":  "CommandLine",
+                                                         "columnName":  "InitiatingProcessCommandLine"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5H",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  [
+
+                                                                                        ],
+                                                                "groupByCustomDetails":  [
+
+                                                                                         ]
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "AlertPerResult"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (12).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:21",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:21",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

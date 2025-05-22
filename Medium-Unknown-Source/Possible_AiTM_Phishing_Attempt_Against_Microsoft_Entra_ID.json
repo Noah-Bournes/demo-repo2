@@ -1,0 +1,88 @@
+﻿{
+    "RuleId":  "7e5549b5-b08c-44c0-a27c-f16f64c9b1c5\u0027)]",
+    "DisplayName":  "Possible AiTM Phishing Attempt Against Microsoft Entra ID",
+    "Description":  "Threat actors may attempt to phish users in order to hijack a users sign-in session, and skip the authentication process even if the user had enabled multifactor authentication (MFA) by stealing and replaying stolen credentials and session cookies.\nThis detection looks for successful Microsoft Entra ID sign ins that had a high risk profile, indicating it had suspicious characteristics such as an unusual location, ISP, user agent, or use of anonymizer services.\nIt then looks for a network connection to the IP address that made the sign in immediately before the sign in, that may indicate a user connecting to a phishing site at that IP address and having their authentication session hijacked.\nRef: https://www.microsoft.com/security/blog/2022/07/12/from-cookie-theft-to-bec-attackers-use-aitm-phishing-sites-as-entry-point-to-further-financial-fraud/",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "let time_threshold = 10m;\nlet RiskySignins = materialize (SigninLogs\n| where TimeGenerated \u003e ago(1d)\n| where ResultType == 0\n| where RiskLevelDuringSignIn =~ \"high\" or RiskLevelAggregated =~ \"high\"\n| extend SignInTime = TimeGenerated, Name=split(UserPrincipalName, \"@\")[0], UPNSuffix=split(UserPrincipalName, \"@\")[1]);\nlet ips = todynamic(toscalar(RiskySignins | summarize make_list(IPAddress)));\nRiskySignins\n| join kind=inner (_Im_WebSession(starttime=ago(1d), ipaddr_has_any_prefix=ips, eventresult=\"Success\", pack=True))\non $left.IPAddress == $right.DstIpAddr\n| where EventStartTime \u003c TimeGenerated\n| extend TimeDelta = TimeGenerated - EventStartTime\n| where TimeDelta \u003c= time_threshold\n| extend NetworkEventStartTime = EventStartTime, NetworkEventEndTime = EventEndTime\n| extend SrcUsername = column_ifexists(\"SrcUsername\", \"Unknown\")\n| project-reorder SignInTime, UserPrincipalName, IPAddress, AppDisplayName, ClientAppUsed, DeviceDetail, LocationDetails, NetworkLocationDetails, RiskEventTypes, UserAgent, NetworkEventStartTime, NetworkEventEndTime, SrcIpAddr, DstIpAddr, DstPortNumber, Dvc, DvcHostname, SrcBytes, NetworkProtocol, SrcUsername\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "P1D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "InitialAccess",
+                    "DefenseEvasion",
+                    "CredentialAccess"
+                ],
+    "Techniques":  [
+                       "T1078",
+                       "T1557",
+                       "T1111"
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "16daa67c-b137-48dc-8eb7-76598a44791a",
+    "TemplateVersion":  "1.0.4",
+    "EntityMappings":  [
+                           {
+                               "entityType":  "Account",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Name",
+                                                         "columnName":  "Name"
+                                                     },
+                                                     {
+                                                         "identifier":  "UPNSuffix",
+                                                         "columnName":  "UPNSuffix"
+                                                     }
+                                                 ]
+                           },
+                           {
+                               "entityType":  "IP",
+                               "fieldMappings":  [
+                                                     {
+                                                         "identifier":  "Address",
+                                                         "columnName":  "IPAddress"
+                                                     }
+                                                 ]
+                           }
+                       ],
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (14).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:24",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:24",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

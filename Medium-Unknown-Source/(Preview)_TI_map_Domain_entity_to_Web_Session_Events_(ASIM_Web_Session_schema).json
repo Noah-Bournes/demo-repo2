@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "a0cbe165-7231-499c-b249-fe8d8ce2b3d2\u0027)]",
+    "DisplayName":  "(Preview) TI map Domain entity to Web Session Events (ASIM Web Session schema)",
+    "Description":  "This rule identifies Web Sessions for which the target URL hostname is a known IoC. \u003cbr\u003e\u003cbr\u003eThis rule uses the [Advanced Security Information Model (ASIM)](https://aka.ms/AboutSIM) and supports any web session source that complies with ASIM.",
+    "Severity":  "Medium",
+    "Enabled":  true,
+    "Query":  "let HAS_ANY_MAX = 10000;\nlet dt_lookBack = 1h;\nlet ioc_lookBack = 14d;\n//Create a list of TLDs in our threat feed for later validation\nlet DOMAIN_TI=ThreatIntelligenceIndicator\n| where TimeGenerated \u003e= ago(ioc_lookBack) and ExpirationDateTime \u003e now()\n| summarize LatestIndicatorTime = arg_max(TimeGenerated, *) by IndicatorId\n| where Active == true\n// Picking up only IOC\u0027s that contain the entities we want\n| where isnotempty(DomainName);\nlet DOMAIN_TI_list= todynamic(toscalar(DOMAIN_TI | summarize NIoCs = dcount(DomainName), Domains = make_set(DomainName) \n  | project Domains=iff(NIoCs \u003e HAS_ANY_MAX, dynamic([]), Domains) ));\nDOMAIN_TI\n// using innerunique to keep perf fast and result set low, we only need one match to indicate potential malicious activity that needs to be investigated\n| join kind=innerunique (\n    _Im_WebSession(starttime=ago(dt_lookBack), url_has_any= DOMAIN_TI_list )\n    //Extract domain patterns from syslog message\n    | extend domain = tostring(parse_url(Url)[\"Host\"])\n    | where isnotempty(domain)\n    | extend tld = tostring(split(domain, \u0027.\u0027)[-1])\n    | extend Event_TimeGenerated = TimeGenerated\n) on $left.DomainName==$right.domain\n| where Event_TimeGenerated \u003c ExpirationDateTime\n| summarize Event_TimeGenerated  = arg_max(Event_TimeGenerated , *) by IndicatorId, domain\n| project Event_TimeGenerated, Description, ActivityGroupNames, IndicatorId, ThreatType, ExpirationDateTime, ConfidenceScore, domain, SrcIpAddr, Url\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "P14D",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "Impact"
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "b1832f60-6c3d-4722-a0a5-3d564ee61a63",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (2).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:25",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:25",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}

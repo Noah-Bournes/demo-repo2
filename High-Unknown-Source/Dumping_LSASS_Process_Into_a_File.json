@@ -1,0 +1,61 @@
+﻿{
+    "RuleId":  "05e7e070-e243-449f-9266-3ed42c34fd9a\u0027)]",
+    "DisplayName":  "Dumping LSASS Process Into a File",
+    "Description":  "Adversaries may attempt to access credential material stored in the process memory of the Local Security Authority Subsystem Service (LSASS). \nAfter a user logs on, the system generates and stores a variety of credential materials in LSASS process memory. \nThese credential materials can be harvested by an administrative user or SYSTEM and used to conduct Lateral Movement using Use Alternate Authentication Material. \nAs well as in-memory techniques, the LSASS process memory can be dumped from the target host and analyzed on a local system.\nRef: https://attack.mitre.org/techniques/T1003/001/",
+    "Severity":  "High",
+    "Enabled":  true,
+    "Query":  "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID==10\n| parse EventData with * \u0027TargetImage\"\u003e\u0027 TargetImage \"\u003c\" * \u0027GrantedAccess\"\u003e\u0027 GrantedAccess \"\u003c\" * \u0027CallTrace\"\u003e\u0027 CallTrace \"\u003c\" * \n| where GrantedAccess == \"0x1FFFFF\" and TargetImage == \"C:\\\\Windows\\\\System32\\\\lsass.exe\" and CallTrace has_any (\"dbghelp.dll\",\"dbgcore.dll\")\n| parse EventData with * \u0027SourceProcessGUID\"\u003e\u0027 SourceProcessGUID \"\u003c\" * \u0027SourceImage\"\u003e\u0027 SourceImage \"\u003c\" *\n| summarize StartTime = min(TimeGenerated), EndTime = max(TimeGenerated) by EventID, Computer, SourceProcessGUID, SourceImage, GrantedAccess, TargetImage, CallTrace\n",
+    "QueryFrequency":  "PT1H",
+    "QueryPeriod":  "PT1H",
+    "TriggerOperator":  "GreaterThan",
+    "TriggerThreshold":  0,
+    "SuppressionDuration":  "PT5H",
+    "SuppressionEnabled":  false,
+    "Tactics":  [
+                    "CredentialAccess"
+                ],
+    "Techniques":  [
+
+                   ],
+    "SubTechniques":  [
+
+                      ],
+    "AlertRuleTemplateName":  "a7b9df32-1367-402d-b385-882daf6e3020",
+    "TemplateVersion":  null,
+    "EntityMappings":  null,
+    "CustomDetails":  null,
+    "IncidentConfiguration":  {
+                                  "createIncident":  true,
+                                  "groupingConfiguration":  {
+                                                                "enabled":  false,
+                                                                "reopenClosedIncident":  false,
+                                                                "lookbackDuration":  "PT5M",
+                                                                "matchingMethod":  "AllEntities",
+                                                                "groupByEntities":  [
+
+                                                                                    ],
+                                                                "groupByAlertDetails":  null,
+                                                                "groupByCustomDetails":  null
+                                                            }
+                              },
+    "EventGroupingSettings":  {
+                                  "aggregationKind":  "SingleAlert"
+                              },
+    "Kind":  "Scheduled",
+    "ApiVersion":  "2023-12-01-preview",
+    "SourceFile":  "Azure_Sentinel_analytics_rules (2).json",
+    "VersionHistory":  [
+                           {
+                               "Date":  "2025-05-22 16:19:25",
+                               "Version":  "1.0",
+                               "Action":  "Created",
+                               "Changes":  [
+
+                                           ],
+                               "UpdatedBy":  "NoahBournes"
+                           }
+                       ],
+    "LastUpdated":  "2025-05-22 16:19:25",
+    "CurrentVersion":  "1.0",
+    "OriginTenant":  "Crisk"
+}
